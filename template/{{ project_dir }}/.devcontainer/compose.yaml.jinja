@@ -1,0 +1,23 @@
+name: {{ project_dir | lower }}-agent
+
+services:
+  agent:
+    container_name: {{ project_dir | lower }}-devcontainer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dotcom-agent:latest
+    pull_policy: build
+    init: true
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+    working_dir: {{ projects_root }}/{{ project_dir }}/main
+
+    volumes:
+      - ..:{{ projects_root }}/{{ project_dir }}
+      - .:${HOME}/Projects/Dotcom/.devcontainer:ro
+      - ${HOME}/.claude:/home/dev/.claude
+      - ${HOME}/.config/gh:/home/dev/.config/gh
+      - ${HOME}/.gitconfig:/home/dev/.gitconfig:ro

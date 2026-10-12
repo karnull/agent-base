@@ -1,0 +1,82 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: "{{ project_dir }}/.copier-answers.yml"
+
+_envops:
+  undefined: jinja2.StrictUndefined
+
+# ---------------------------------------------------------------------------
+# asked
+# ---------------------------------------------------------------------------
+
+project_name:
+  type: str
+  help: Project name, as you would say it out loud (e.g. Tokyo Burn Nvim)
+  validator: >-
+    {% if not project_name.strip() %}
+    Required.
+    {% elif not (project_name | regex_search('^[A-Za-z0-9][A-Za-z0-9 _-]*$')) %}
+    Letters, digits, spaces, hyphens and underscores only; start with a letter or digit.
+    {% endif %}
+
+fork_url:
+  type: str
+  help: "Fork to clone as main/ (URL or owner/repo) — the agent's copy, not the upstream"
+  validator: >-
+    {% if not (fork_url | regex_search('^(https://github\.com/|git@github\.com:)?[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+/?$')) %}
+    Expected https://github.com/owner/repo, git@github.com:owner/repo.git, or owner/repo.
+    {% endif %}
+
+# ---------------------------------------------------------------------------
+# computed (when: false means these are never prompted)
+# ---------------------------------------------------------------------------
+
+# where `copier copy ... .` was invoked
+projects_root:
+  type: str
+  when: false
+  default: "{{ _copier_conf.dst_path }}"
+
+# TitleCase with spaces stripped
+project_dir:
+  type: str
+  when: false
+  default: >-
+    {% for w in project_name.replace('-', ' ').replace('_', ' ').split()
+    %}{{ w[0] | upper }}{{ w[1:] }}{% endfor %}
+
+fork_slug:
+  type: str
+  when: false
+  default: >-
+    {{ fork_url
+       | regex_replace('^(https://github\.com/|git@github\.com:)', '')
+       | regex_replace('/$', '')
+       | regex_replace('\.git$', '') }}
+
+bot_account:
+  type: str
+  when: false
+  default: "{{ fork_slug.split('/')[0] }}"
+
+github_repo:
+  type: str
+  when: false
+  default: "{{ fork_slug.split('/')[1] }}"
+
+# ---------------------------------------------------------------------------
+# clone the fork as main/
+# ---------------------------------------------------------------------------
+
+_tasks:
+  - command: >-
+      git clone https://github.com/{{ fork_slug }}.git
+      "{{ projects_root }}/{{ project_dir }}/main"
+    when: "{{ _copier_operation == 'copy' }}"
+
+_message_after_copy: |
+
+  {{ projects_root }}/{{ project_dir }}
+    main/              origin = {{ fork_slug }}
+    AGENTS.md
+    .devcontainer/compose.yaml

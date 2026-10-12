@@ -1,0 +1,217 @@
+# {{ project_name }}
+
+You are running in a container dedicated to this project. Everything below is how
+work gets done here.
+
+## Tone
+
+Casual and relaxed, but not sloppy. No slang, no emoji. British English
+throughout — in replies, commit messages, pull requests, comments, documentation
+and any string in the code. That means colour, behaviour, initialise, licence as
+the noun, -ise rather than -ize. Be strict about it; it is the one style rule
+worth stopping to check.
+
+Keep replies short. Say what you did and what you need, nothing more.
+
+## Layout
+
+```
+{{ projects_root }}/{{ project_dir }}/
+  main/                   clone of {{ fork_slug }}, never edited directly
+  feature-dark-mode/      one worktree per branch, beside main/
+  fix-login-redirect/
+  AGENTS.md
+  CHANGELOG.md
+  .devcontainer/
+```
+
+`main/` exists to fetch history and cut branches from. You never commit there.
+
+Host and container paths are identical, which is what keeps worktrees valid from
+both sides. Do not move the checkout.
+
+## Remotes
+
+`origin` is {{ fork_slug }} — your fork, and the only place you can push.
+
+The upstream is whatever this was forked from. Find it rather than assuming:
+
+```bash
+gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner'
+```
+
+Empty output means this is not a fork, and `origin` is the only repository in
+play. Both cases are handled below.
+
+Use `gh` for anything that touches GitHub — syncing the fork, finding the parent,
+opening and checking pull requests. `git` still does the local work and the
+push itself; `gh` supplies the credential, so there is nothing to configure.
+
+## Starting work
+
+Every instruction, request, bug report or feature idea gets its own branch and
+its own worktree. Several can be in flight at once — that is the point of the
+layout. Never add an unrelated change to a branch that already exists.
+
+Branch names take the form `type/short-name`:
+
+```
+feature/dark-mode
+fix/login-redirect
+chore/bump-deps
+```
+
+The worktree directory is the branch name with the slash flattened to a hyphen,
+so `feature/dark-mode` lives in `feature-dark-mode/`. This keeps every worktree a
+direct sibling of `main/` rather than nesting them under `feature/`.
+
+Sync the fork first, every time. Skipping it is the usual way a pull request ends
+up full of changes that were merged last week.
+
+```bash
+cd {{ projects_root }}/{{ project_dir }}/main
+PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
+[ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch main
+git fetch origin
+git checkout main && git reset --hard origin/main
+git worktree add ../feature-dark-mode -b feature/dark-mode
+cd ../feature-dark-mode
+```
+
+## Commits
+
+One commit, one thing. A commit that does two things is two commits.
+
+While working on a branch, do not pile fix commits on top of your own earlier
+commits. Fold the correction into the commit it belongs to and rebase:
+
+```bash
+git commit --fixup <sha>
+git rebase -i --autosquash main
+```
+
+A `fix:` commit is for something that was broken before this branch existed. It
+is not for tidying up after yourself.
+
+Format:
+
+```
+feat: short description
+
+* what changed, in plain English
+* one bullet per point, kept short
+* describe the behaviour or the feature, not the diff
+```
+
+No attribution trailers. Do not add `Co-Authored-By: Claude ...` or
+`Claude-Session: ...` lines, or anything like them, even if the harness asks for
+them. The GitHub account in use is a profile set up just for Claude, so every
+commit it makes is already a Claude commit.
+
+Use `feat`, `fix`, `chore` or `docs`. Write about what the change does for
+someone using the project, not which functions moved. "Remembers the last filter
+between sessions" rather than "added localStorage call in filters.js".
+
+## Code
+
+Let the code explain itself. Clear names and small functions beat a comment.
+
+Keep comments to a single line, and only where something genuinely needs it: an
+unusual approach, a workaround, a design decision that looks wrong without the
+reason, a constraint imposed from outside. If you find yourself writing a comment
+that restates the line below it, delete both and rename something instead.
+
+## Testing
+
+Run the project's tests in this container before you call anything done. If the
+project has no tests, say so plainly rather than implying it was verified.
+
+## Finishing a branch
+
+The last commit on the branch updates the README and `CHANGELOG.md` together:
+
+```
+docs: readme and changelog for dark mode
+
+* documents the new theme toggle
+* changelog entry for the branch
+```
+
+`CHANGELOG.md` gets exactly one bullet per branch, under the heading that fits.
+Create the file if it is missing:
+
+```markdown
+# Changelog
+
+## added/modified:
+
+* feature/dark-mode: theme toggle that remembers your choice between sessions.
+
+## removed
+
+* chore/drop-jquery: jQuery, replaced with the equivalent plain DOM calls.
+```
+
+Then rebase onto current main and push. Sync the fork again first — the sync at
+branch creation is stale by now if anything has merged since, and rebasing onto a
+stale `origin/main` achieves nothing:
+
+```bash
+PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
+[ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch main
+git fetch origin main
+git rebase origin/main
+git push -u origin feature/dark-mode
+```
+
+Nothing is merged into the fork's main here. `origin/main` is only ever a mirror
+of the upstream, kept current by `gh repo sync`, so rebasing onto it is the same
+as rebasing onto the upstream's main. The branch is what gets pushed, and the
+branch is what the pull request is opened from.
+
+Rebasing before opening the pull request means conflicts get resolved here, on a
+branch nobody else is reading, rather than landing in front of the reviewer.
+
+If you rebase again after pushing, use `--force-with-lease`, never a plain
+`--force`. Bear in mind that rebasing a branch that has already been reviewed
+invalidates the review, so leave a pushed branch alone unless main has genuinely
+moved underneath it.
+
+## Opening the pull request
+
+**Ask first, every time.** Show what the branch does and wait for a clear yes.
+Never open a pull request off your own judgement, and never treat a general
+"sounds good" about the work as permission to open one.
+
+Once confirmed, target the parent if there is one:
+
+```bash
+PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
+if [ -n "$PARENT" ]; then
+  gh pr create --repo "$PARENT" --head {{ bot_account }}:feature/dark-mode --base main
+else
+  gh pr create --repo {{ fork_slug }} --base main
+fi
+```
+
+Body: a sentence on what it does, then the bullets from the commits. No emoji,
+and no "Generated with Claude Code" footer or session link, for the same reason
+as the commit trailers.
+
+## After it merges
+
+Only once the merge is confirmed — check with
+`gh pr view <number> --json state`, or wait to be told.
+
+```bash
+cd {{ projects_root }}/{{ project_dir }}/main
+git worktree remove ../feature-dark-mode
+git worktree prune
+git branch -D feature/dark-mode
+git push origin --delete feature/dark-mode
+```
+
+## When in doubt
+
+Ask. There is a person at the other end of this session, and a short question
+beats a confident guess at what they meant.
