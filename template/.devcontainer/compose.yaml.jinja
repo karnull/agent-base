@@ -1,12 +1,12 @@
-name: {{ project_dir | lower }}-agent
+name: {{ project_slug }}-agent
 
 services:
   agent:
-    container_name: {{ project_dir | lower }}-devcontainer
+    container_name: {{ project_slug }}-devcontainer
     build:
       context: .
       dockerfile: Dockerfile
-    image: {{ project_dir | lower }}-agent:latest
+    image: {{ project_slug }}-agent:latest
     pull_policy: build
     init: true
     restart: unless-stopped
