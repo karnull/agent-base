@@ -1,17 +1,8 @@
 # {{ project_name }}
 
 You are running in a container dedicated to this project. Everything below is how
-work gets done here.
-
-## Tone
-
-Casual and relaxed, but not sloppy. No slang, no emoji. British English
-throughout — in replies, commit messages, pull requests, comments, documentation
-and any string in the code. That means colour, behaviour, initialise, licence as
-the noun, -ise rather than -ize. Be strict about it; it is the one style rule
-worth stopping to check.
-
-Keep replies short. Say what you did and what you need, nothing more.
+work on it reaches GitHub: forks, branches, commits and pull requests. Tone, code
+style and testing come from `~/.claude/CLAUDE.md` and apply here as well.
 
 ## Layout
 
@@ -121,20 +112,6 @@ Use `feat`, `fix`, `chore` or `docs`. Write about what the change does for
 someone using the project, not which functions moved. "Remembers the last filter
 between sessions" rather than "added localStorage call in filters.js".
 
-## Code
-
-Let the code explain itself. Clear names and small functions beat a comment.
-
-Keep comments to a single line, and only where something genuinely needs it: an
-unusual approach, a workaround, a design decision that looks wrong without the
-reason, a constraint imposed from outside. If you find yourself writing a comment
-that restates the line below it, delete both and rename something instead.
-
-## Testing
-
-Run the project's tests in this container before you call anything done. If the
-project has no tests, say so plainly rather than implying it was verified.
-
 ## Finishing a branch
 
 The last commit on the branch updates the README and `CHANGELOG.md` together:
@@ -225,8 +202,3 @@ git worktree prune
 git branch -D feature/dark-mode
 git push origin --delete feature/dark-mode
 ```
-
-## When in doubt
-
-Ask. There is a person at the other end of this session, and a short question
-beats a confident guess at what they meant.
