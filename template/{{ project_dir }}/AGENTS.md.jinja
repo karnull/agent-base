@@ -43,6 +43,15 @@ gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner'
 Empty output means this is not a fork, and `origin` is the only repository in
 play. Both cases are handled below.
 
+The default branch is not always `main`. Look it up rather than assuming:
+
+```bash
+BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
+```
+
+Every command below that says `$BASE` means that branch. The shell does not keep
+variables between commands, so each block sets it again.
+
 Use `gh` for anything that touches GitHub — syncing the fork, finding the parent,
 opening and checking pull requests. `git` still does the local work and the
 push itself; `gh` supplies the credential, so there is nothing to configure.
@@ -71,9 +80,10 @@ up full of changes that were merged last week.
 ```bash
 cd {{ projects_root }}/{{ project_dir }}/main
 PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
-[ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch main
+BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
+[ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch "$BASE"
 git fetch origin
-git checkout main && git reset --hard origin/main
+git checkout "$BASE" && git reset --hard "origin/$BASE"
 git worktree add ../feature-dark-mode -b feature/dark-mode
 cd ../feature-dark-mode
 ```
@@ -87,7 +97,7 @@ commits. Fold the correction into the commit it belongs to and rebase:
 
 ```bash
 git commit --fixup <sha>
-git rebase -i --autosquash main
+git rebase -i --autosquash "origin/$BASE"
 ```
 
 A `fix:` commit is for something that was broken before this branch existed. It
@@ -152,21 +162,22 @@ Create the file if it is missing:
 * chore/drop-jquery: jQuery, replaced with the equivalent plain DOM calls.
 ```
 
-Then rebase onto current main and push. Sync the fork again first — the sync at
-branch creation is stale by now if anything has merged since, and rebasing onto a
-stale `origin/main` achieves nothing:
+Then rebase onto the current default branch and push. Sync the fork again first —
+the sync at branch creation is stale by now if anything has merged since, and
+rebasing onto a stale `origin/$BASE` achieves nothing:
 
 ```bash
 PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
-[ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch main
-git fetch origin main
-git rebase origin/main
+BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
+[ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch "$BASE"
+git fetch origin "$BASE"
+git rebase "origin/$BASE"
 git push -u origin feature/dark-mode
 ```
 
-Nothing is merged into the fork's main here. `origin/main` is only ever a mirror
-of the upstream, kept current by `gh repo sync`, so rebasing onto it is the same
-as rebasing onto the upstream's main. The branch is what gets pushed, and the
+Nothing is merged into the fork's default branch here. `origin/$BASE` is only
+ever a mirror of the upstream, kept current by `gh repo sync`, so rebasing onto it
+is the same as rebasing onto the upstream's default branch. The branch is what gets pushed, and the
 branch is what the pull request is opened from.
 
 Rebasing before opening the pull request means conflicts get resolved here, on a
@@ -174,7 +185,7 @@ branch nobody else is reading, rather than landing in front of the reviewer.
 
 If you rebase again after pushing, use `--force-with-lease`, never a plain
 `--force`. Bear in mind that rebasing a branch that has already been reviewed
-invalidates the review, so leave a pushed branch alone unless main has genuinely
+invalidates the review, so leave a pushed branch alone unless `$BASE` has genuinely
 moved underneath it.
 
 ## Opening the pull request
@@ -187,10 +198,11 @@ Once confirmed, target the parent if there is one:
 
 ```bash
 PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
+BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
 if [ -n "$PARENT" ]; then
-  gh pr create --repo "$PARENT" --head {{ bot_account }}:feature/dark-mode --base main
+  gh pr create --repo "$PARENT" --head {{ bot_account }}:feature/dark-mode --base "$BASE"
 else
-  gh pr create --repo {{ fork_slug }} --base main
+  gh pr create --repo {{ fork_slug }} --base "$BASE"
 fi
 ```
 
