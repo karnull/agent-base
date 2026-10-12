@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: dotcom-agent:latest
+    image: {{ project_dir | lower }}-agent:latest
     pull_policy: build
     init: true
     restart: unless-stopped
@@ -17,7 +17,7 @@ services:
 
     volumes:
       - ..:{{ projects_root }}/{{ project_dir }}
-      - .:${HOME}/Projects/Dotcom/.devcontainer:ro
+      - .:{{ projects_root }}/{{ project_dir }}/.devcontainer:ro
       - ${HOME}/.claude:/home/dev/.claude
       - ${HOME}/.config/gh:/home/dev/.config/gh
       - ${HOME}/.gitconfig:/home/dev/.gitconfig:ro
