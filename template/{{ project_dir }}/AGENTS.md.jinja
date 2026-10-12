@@ -36,7 +36,7 @@ both sides. Do not move the checkout.
 The upstream is whatever this was forked from. Find it rather than assuming:
 
 ```bash
-gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner'
+gh repo view {{ fork_slug }} --json parent --jq '.parent | select(.) | "\(.owner.login)/\(.name)"'
 ```
 
 Empty output means this is not a fork, and `origin` is the only repository in
@@ -78,7 +78,7 @@ up full of changes that were merged last week.
 
 ```bash
 cd {{ projects_root }}/{{ project_dir }}/main
-PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
+PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent | select(.) | "\(.owner.login)/\(.name)"')
 BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
 [ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch "$BASE"
 git fetch origin
@@ -170,7 +170,7 @@ the sync at branch creation is stale by now if anything has merged since, and
 rebasing onto a stale `origin/$BASE` achieves nothing:
 
 ```bash
-PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
+PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent | select(.) | "\(.owner.login)/\(.name)"')
 BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
 [ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch "$BASE"
 git fetch origin "$BASE"
@@ -200,7 +200,7 @@ Never open a pull request off your own judgement, and never treat a general
 Once confirmed, target the parent if there is one:
 
 ```bash
-PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent.nameWithOwner')
+PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent | select(.) | "\(.owner.login)/\(.name)"')
 BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
 if [ -n "$PARENT" ]; then
   gh pr create --repo "$PARENT" --head {{ bot_account }}:feature/dark-mode --base "$BASE"
