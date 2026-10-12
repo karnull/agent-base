@@ -6,3 +6,4 @@
 * fix/default-branch: AGENTS.md looks up the default branch instead of assuming it is called main.
 * fix/changelog-location: AGENTS.md keeps the changelog in the branch's worktree, so it is merged with the pull request.
 * fix/absolute-project-paths: projects created with a relative destination get full paths, so the container starts.
+* fix/parent-lookup: AGENTS.md finds the upstream of a forked project, so the fork is synced and pull requests go upstream.
