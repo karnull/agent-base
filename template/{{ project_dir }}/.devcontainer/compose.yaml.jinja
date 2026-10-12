@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: dotcom-agent:latest
+    image: {{ project_dir | lower }}-agent:latest
     pull_policy: build
     init: true
     restart: unless-stopped
