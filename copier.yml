@@ -29,6 +29,12 @@ project_dir:
   when: false
   default: "{{ project_path | basename }}"
 
+# docker only allows lowercase letters, digits, hyphens and underscores in compose names
+project_slug:
+  type: str
+  when: false
+  default: "{{ project_dir | lower | regex_replace('[^a-z0-9_-]+', '-') | regex_replace('^-+|-+$', '') }}"
+
 # ---------------------------------------------------------------------------
 # asked
 # ---------------------------------------------------------------------------
