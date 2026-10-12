@@ -21,7 +21,6 @@ Keep replies short. Say what you did and what you need, nothing more.
   feature-dark-mode/      one worktree per branch, beside main/
   fix-login-redirect/
   AGENTS.md
-  CHANGELOG.md
   .devcontainer/
 ```
 
@@ -147,8 +146,12 @@ docs: readme and changelog for dark mode
 * changelog entry for the branch
 ```
 
-`CHANGELOG.md` gets exactly one bullet per branch, under the heading that fits.
-Create the file if it is missing:
+`CHANGELOG.md` lives in the repository root, so edit the copy in the branch's
+own worktree. It is committed on the branch and merged with the rest of the pull
+request. Never edit it in `main/`, and never keep one beside `AGENTS.md`.
+
+It gets exactly one bullet per branch, under the heading that fits. Create the
+file if it is missing:
 
 ```markdown
 # Changelog
