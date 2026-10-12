@@ -31,11 +31,11 @@ fork_url:
 # computed (when: false means these are never prompted)
 # ---------------------------------------------------------------------------
 
-# where `copier copy ... .` was invoked
+# where `copier copy ... .` was invoked, made absolute because compose needs a full path
 projects_root:
   type: str
   when: false
-  default: "{{ _copier_conf.dst_path }}"
+  default: "{{ _copier_conf.dst_path | realpath }}"
 
 # TitleCase with spaces stripped
 project_dir:
