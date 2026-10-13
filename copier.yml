@@ -5,48 +5,8 @@ _envops:
   undefined: jinja2.StrictUndefined
 
 # ---------------------------------------------------------------------------
-# where the project lives
-# ---------------------------------------------------------------------------
-
-# saved as an answer because copier update renders in a temporary folder
-project_path:
-  type: str
-  help: Full path of the project folder, the same on the host and in the container
-  default: "{{ _copier_conf.dst_path | realpath }}"
-  validator: >-
-    {% if not project_path.startswith('/') %}
-    Must be an absolute path.
-    {% endif %}
-
-# computed (when: false means these are never prompted)
-projects_root:
-  type: str
-  when: false
-  default: "{{ project_path | dirname }}"
-
-project_dir:
-  type: str
-  when: false
-  default: "{{ project_path | basename }}"
-
-# docker only allows lowercase letters, digits, hyphens and underscores in compose names
-project_slug:
-  type: str
-  when: false
-  default: "{{ project_dir | lower | regex_replace('[^a-z0-9_-]+', '-') | regex_replace('^-+|-+$', '') }}"
-
-# ---------------------------------------------------------------------------
 # asked
 # ---------------------------------------------------------------------------
-
-project_name:
-  type: str
-  help: Project name, as you would say it out loud (e.g. Tokyo Burn Nvim)
-  default: "{{ project_dir }}"
-  validator: >-
-    {% if not project_name.strip() %}
-    Required.
-    {% endif %}
 
 fork_url:
   type: str
@@ -57,7 +17,7 @@ fork_url:
     {% endif %}
 
 # ---------------------------------------------------------------------------
-# derived from the fork
+# derived from the fork (when: false means these are never prompted)
 # ---------------------------------------------------------------------------
 
 fork_slug:
@@ -80,11 +40,18 @@ github_repo:
   default: "{{ fork_slug.split('/')[1] }}"
 
 # ---------------------------------------------------------------------------
-# clone the fork as main/, and track the generated files so copier update works
+# set up the project folder, which is the destination itself
 # ---------------------------------------------------------------------------
 
-# both are skipped when they already exist, so an older project can be copied over
+# copier update renders in a temporary folder, so the real path is written once
+# to .devcontainer/.env here instead of into any template file
 _tasks:
+  - command: >-
+      [ -f .devcontainer/.env ] || printf 'PROJECT_ROOT=%s\nPROJECT_SLUG=%s\n'
+      "$(pwd -P)"
+      "$(basename "$(pwd -P)" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9_-]\{1,\}/-/g; s/^-*//; s/-*$//')"
+      > .devcontainer/.env
+    when: "{{ _copier_operation == 'copy' }}"
   - command: >-
       [ -d main ] || git clone https://github.com/{{ fork_slug }}.git main
     when: "{{ _copier_operation == 'copy' }}"
@@ -95,9 +62,5 @@ _tasks:
 
 _message_after_copy: |
 
-  {{ projects_root }}/{{ project_dir }}
-    main/              origin = {{ fork_slug }}
-    AGENTS.md
-    .devcontainer/compose.yaml
-
+  main/ is a clone of {{ fork_slug }}. Start the container with `devenv up`.
   Update later with `copier update --trust` from this folder, then commit.

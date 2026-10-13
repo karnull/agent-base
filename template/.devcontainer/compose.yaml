@@ -1,0 +1,26 @@
+# PROJECT_ROOT and PROJECT_SLUG come from .env, written when the project was created
+name: ${PROJECT_SLUG:?missing from .devcontainer/.env}-agent
+
+services:
+  agent:
+    container_name: ${PROJECT_SLUG}-devcontainer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${PROJECT_SLUG}-agent:latest
+    pull_policy: build
+    init: true
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+    working_dir: ${PROJECT_ROOT:?missing from .devcontainer/.env}/main
+    environment:
+      PROJECT_ROOT: ${PROJECT_ROOT}
+
+    volumes:
+      - ..:${PROJECT_ROOT}
+      - .:${PROJECT_ROOT}/.devcontainer:ro
+      - ${HOME}/.claude:/home/dev/.claude
+      - ${HOME}/.config/gh:/home/dev/.config/gh
+      - ${HOME}/.gitconfig:/home/dev/.gitconfig:ro
