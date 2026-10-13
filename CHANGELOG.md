@@ -10,3 +10,4 @@
 * feature/global-claude-md: general behaviour moves to a shared CLAUDE.md, leaving AGENTS.md with only the git and GitHub workflow.
 * fix/copier-recopy: projects can be kept up to date with copier update, and folder names with dots or spaces work.
 * feature/ask-only-fork: copier copy asks only for the fork and takes the project name and path from the current folder; devenv gains init and update.
+* docs/readme: short readme covering setup and usage.
