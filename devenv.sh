@@ -5,8 +5,11 @@
 ACTION=$1
 [ $# -gt 0 ] && shift
 
-# cd to project root if inside git repo
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+# the copier template is the repository this script lives in, found through any symlink
+TEMPLATE_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+
+# cd to project root if inside git repo; init works in the current folder instead
+if [ "$ACTION" != init ] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     cd "$(git rev-parse --show-toplevel)" || exit 1
 fi
 
@@ -23,6 +26,7 @@ cat <<'EOF'
 Usage: devenv [action] [args...]
 
 Actions:
+  init <NAME>     create project NAME in the current folder from the template
   up              start devcontainer (creates it if missing)
   down            stop devcontainer
   restart         restart devcontainer
@@ -84,10 +88,26 @@ get_container_name() {
     echo "${name:-${PWD##*/}-devcontainer}"
 }
 
+# copier mishandles a template with uncommitted changes and deletes generated files
+require_clean_template() {
+    [ -z "$(git -C "$TEMPLATE_DIR" status --porcelain)" ] \
+        || error "the template at $TEMPLATE_DIR has uncommitted changes; commit or stash them first"
+}
+
 #-------------------------------------------------------------------------------
 # actions
 
 case "$ACTION" in
+    init)
+        [ -z "$1" ] && error "no project name provided"
+        [ -e "$1" ] && error "$1 already exists"
+        require_clean_template
+        mkdir "$1" && cd "$1" || exit 1
+        # HEAD rather than the newest tag, so the template matches this checkout
+        copier copy --trust --vcs-ref HEAD "$TEMPLATE_DIR" .
+        exit
+        ;;
+
     start|up)
         require_compose_file
         compose up -d
