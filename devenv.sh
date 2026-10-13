@@ -27,6 +27,7 @@ Usage: devenv [action] [args...]
 
 Actions:
   init <NAME>     create project NAME in the current folder from the template
+  update          apply template changes to this project with copier update
   up              start devcontainer (creates it if missing)
   down            stop devcontainer
   restart         restart devcontainer
@@ -105,6 +106,16 @@ case "$ACTION" in
         mkdir "$1" && cd "$1" || exit 1
         # HEAD rather than the newest tag, so the template matches this checkout
         copier copy --trust --vcs-ref HEAD "$TEMPLATE_DIR" .
+        exit
+        ;;
+
+    update|u)
+        require_clean_template
+        require_compose_file
+        cd "${COMPOSE_FILE%/.devcontainer/compose.yaml}" || exit 1
+        copier update --trust --defaults --vcs-ref HEAD --answers-file .copier-answers.yml \
+            || error "copier update failed"
+        echo "Review the changes with git diff, then commit them."
         exit
         ;;
 
