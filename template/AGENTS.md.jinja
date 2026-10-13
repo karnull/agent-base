@@ -1,4 +1,4 @@
-# {{ project_name }}
+# {{ github_repo }}
 
 You are running in a container dedicated to this project. Everything below is how
 work on it reaches GitHub: forks, branches, commits and pull requests. Tone, code
@@ -7,7 +7,7 @@ style and testing come from `~/.claude/CLAUDE.md` and apply here as well.
 ## Layout
 
 ```
-{{ projects_root }}/{{ project_dir }}/
+$PROJECT_ROOT/
   main/                   clone of {{ fork_slug }}, never edited directly
   feature-dark-mode/      one worktree per branch, beside main/
   fix-login-redirect/
@@ -18,7 +18,8 @@ style and testing come from `~/.claude/CLAUDE.md` and apply here as well.
 `main/` exists to fetch history and cut branches from. You never commit there.
 
 Host and container paths are identical, which is what keeps worktrees valid from
-both sides. Do not move the checkout.
+both sides. Do not move the checkout. `$PROJECT_ROOT` holds that path inside the
+container.
 
 ## Remotes
 
@@ -68,7 +69,7 @@ Sync the fork first, every time. Skipping it is the usual way a pull request end
 up full of changes that were merged last week.
 
 ```bash
-cd {{ projects_root }}/{{ project_dir }}/main
+cd "$PROJECT_ROOT/main"
 PARENT=$(gh repo view {{ fork_slug }} --json parent --jq '.parent | select(.) | "\(.owner.login)/\(.name)"')
 BASE=$(gh repo view {{ fork_slug }} --json defaultBranchRef --jq '.defaultBranchRef.name')
 [ -n "$PARENT" ] && gh repo sync {{ fork_slug }} --source "$PARENT" --branch "$BASE"
@@ -196,7 +197,7 @@ Only once the merge is confirmed — check with
 `gh pr view <number> --json state`, or wait to be told.
 
 ```bash
-cd {{ projects_root }}/{{ project_dir }}/main
+cd "$PROJECT_ROOT/main"
 git worktree remove ../feature-dark-mode
 git worktree prune
 git branch -D feature/dark-mode

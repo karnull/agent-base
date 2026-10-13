@@ -76,7 +76,9 @@ compose() {
 get_container_name() {
     local compose_file name
     if compose_file=$(find_compose_file); then
-        name=$(sed -n 's/^[[:space:]]*container_name:[[:space:]]*//p' "$compose_file" \
+        # compose config fills in the names from .devcontainer/.env
+        name=$(docker compose -f "$compose_file" config 2>/dev/null \
+            | sed -n 's/^[[:space:]]*container_name:[[:space:]]*//p' \
             | head -n 1 | tr -d "\"'[:space:]")
     fi
     echo "${name:-${PWD##*/}-devcontainer}"
