@@ -26,7 +26,9 @@ cat <<'EOF'
 Usage: devenv [action] [args...]
 
 Actions:
-  init <NAME>     create project NAME in the current folder from the template
+  init <NAME> [ARGS...]
+                  create project NAME in the current folder from the template,
+                  passing ARGS to copier copy
   update          apply template changes to this project with copier update
   up              start devcontainer (creates it if missing)
   down            stop devcontainer
@@ -104,8 +106,10 @@ case "$ACTION" in
         [ -e "$1" ] && error "$1 already exists"
         require_clean_template
         mkdir "$1" && cd "$1" || exit 1
+        shift
         # HEAD rather than the newest tag, so the template matches this checkout
-        copier copy --trust --vcs-ref HEAD "$TEMPLATE_DIR" .
+        # anything after the name goes to copier, e.g. --data fork_url=owner/repo
+        copier copy --trust --vcs-ref HEAD "$@" "$TEMPLATE_DIR" .
         exit
         ;;
 

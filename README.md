@@ -21,6 +21,13 @@ devenv init TokyoBurnNvim       # asks for the fork's URL
 cd TokyoBurnNvim && devenv up && devenv claude-remote
 ```
 
+Anything after the name is passed to `copier copy`, so the fork can be given up
+front instead of at the prompt:
+
+```bash
+devenv init repo --data fork_url=user/agent-repo
+```
+
 To pick up template changes, run `devenv update` anywhere in the project and
 commit the result. Commit any changes to this repository first; `devenv` refuses
 to run against a template with uncommitted changes.
