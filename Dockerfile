@@ -11,7 +11,7 @@ ARG GID=1000
 
 # each project is bind mounted at the SAME absolute path it has on the host, and nothing
 # else is mounted, so a container sees its own project and an otherwise empty parent.
-ARG WORKSPACE_ROOT=/home/karsh/Projects
+ARG WORKSPACE_ROOT=/home/karsh/Blackwall
 
 ARG TZ=Australia/Melbourne
 
