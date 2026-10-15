@@ -12,10 +12,16 @@ $PROJECT_ROOT/
   feature-dark-mode/      one worktree per branch, beside main/
   fix-login-redirect/
   AGENTS.md
-  .devcontainer/
+  Dockerfile              what the container image is built from
 ```
 
 `main/` exists to fetch history and cut branches from. You never commit there.
+
+The container's compose file and environment live on the host, outside the
+project folder. You cannot see or change them from in here. The `Dockerfile`
+is the one part kept here; change it only when the user asks. If the container
+needs something different, such as an extra package, say so and the user will
+make the change.
 
 Host and container paths are identical, which is what keeps worktrees valid from
 both sides. Do not move the checkout. `$PROJECT_ROOT` holds that path inside the

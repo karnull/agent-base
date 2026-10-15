@@ -1,6 +1,5 @@
 # track only the generated files; main/ and the worktrees are repositories of their own
 /*
 !/.gitignore
-!/.copier-answers.yml
 !/AGENTS.md
-!/.devcontainer/
+!/Dockerfile
