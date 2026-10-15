@@ -38,6 +38,16 @@ fork_url:
     Expected https://github.com/owner/repo, git@github.com:owner/repo.git, or owner/repo.
     {% endif %}
 
+character:
+  type: str
+  default: ""
+  help: Cyberpunk character this project's agent plays, e.g. Molly Millions
+  # \Z rather than $, which would let a trailing newline through
+  validator: >-
+    {% if character and not (character | regex_search("^[A-Za-z][A-Za-z .'-]{0,39}\Z")) %}
+    letters, spaces, apostrophes, hyphens and full stops, 40 at most
+    {% endif %}
+
 # ---------------------------------------------------------------------------
 # derived from the fork (when: false means these are never prompted)
 # ---------------------------------------------------------------------------
