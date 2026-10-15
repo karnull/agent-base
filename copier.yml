@@ -5,6 +5,28 @@ _envops:
   undefined: jinja2.StrictUndefined
 
 # ---------------------------------------------------------------------------
+# where the project goes; devenv fills these in
+# ---------------------------------------------------------------------------
+
+projects_dir:
+  type: str
+  help: "Folder holding every project"
+  default: /home/karsh/Blackwall
+
+project_name:
+  type: str
+  help: "Name of the project's folder inside the projects folder"
+
+project_slug:
+  type: str
+  help: "Lower-case name for the container, the image and its folder in ~/.local/share/devenv"
+  default: >-
+    {{ project_name
+       | lower
+       | regex_replace('[^a-z0-9_-]+', '-')
+       | regex_replace('^-+|-+$', '') }}
+
+# ---------------------------------------------------------------------------
 # asked
 # ---------------------------------------------------------------------------
 
@@ -14,6 +36,16 @@ fork_url:
   validator: >-
     {% if not (fork_url | regex_search('^(https://github\.com/|git@github\.com:)?[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+/?$')) %}
     Expected https://github.com/owner/repo, git@github.com:owner/repo.git, or owner/repo.
+    {% endif %}
+
+character:
+  type: str
+  default: ""
+  help: Cyberpunk character this project's agent plays, e.g. Molly Millions
+  # \Z rather than $, which would let a trailing newline through
+  validator: >-
+    {% if character and not (character | regex_search("^[A-Za-z][A-Za-z .'-]{0,39}\Z")) %}
+    letters, spaces, apostrophes, hyphens and full stops, 40 at most
     {% endif %}
 
 # ---------------------------------------------------------------------------
@@ -40,18 +72,10 @@ github_repo:
   default: "{{ fork_slug.split('/')[1] }}"
 
 # ---------------------------------------------------------------------------
-# set up the project folder, which is the destination itself
+# set up the destination
 # ---------------------------------------------------------------------------
 
-# copier update renders in a temporary folder, so the real path is written once
-# to .devcontainer/.env here instead of into any template file
 _tasks:
-  - command: >-
-      [ -f .devcontainer/.env ] || printf 'PROJECT_ROOT=%s\nPROJECT_SLUG=%s\n'
-      "$(pwd -P)"
-      "$(basename "$(pwd -P)" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9_-]\{1,\}/-/g; s/^-*//; s/-*$//')"
-      > .devcontainer/.env
-    when: "{{ _copier_operation == 'copy' }}"
   - command: >-
       [ -d main ] || git clone https://github.com/{{ fork_slug }}.git main
     when: "{{ _copier_operation == 'copy' }}"
@@ -62,5 +86,4 @@ _tasks:
 
 _message_after_copy: |
 
-  main/ is a clone of {{ fork_slug }}. Start the container with `devenv up`.
-  Update later with `copier update --trust` from this folder, then commit.
+  main/ is a clone of {{ fork_slug }}.

@@ -12,3 +12,4 @@
 * feature/ask-only-fork: copier copy asks only for the fork and takes the project name and path from the current folder; devenv gains init and update.
 * docs/readme: short readme covering setup and usage.
 * feature/init-copier-args: devenv init passes anything after the project name to copier, so the fork can be given without the prompt.
+* refactor/env-outside-project: each project's compose.yaml, .env and copier answers move to ~/.local/share/devenv/<slug>, a git repository out of reach of the container, while the Dockerfile moves to the project root; projects live in ~/Blackwall, the template is rendered from GitHub, devenv update works on a copy so it never runs git in the project's own repository, and each agent can play a cyberpunk character named by the new character answer. New containers' com.docker.compose.project.working_dir label points at ~/.local/share/devenv/<slug> rather than the project, which Uplink reads.
