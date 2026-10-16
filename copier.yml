@@ -41,7 +41,7 @@ fork_url:
 character:
   type: str
   default: ""
-  help: Cyberpunk character this project's agent plays, e.g. Molly Millions
+  help: Character name the remote connection goes by, e.g. Alt Cunningham
   # \Z rather than $, which would let a trailing newline through
   validator: >-
     {% if character and not (character | regex_search("^[A-Za-z][A-Za-z .'-]{0,39}\Z")) %}

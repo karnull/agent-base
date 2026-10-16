@@ -3,19 +3,12 @@
 You are running in a container dedicated to this project. Everything below is how
 work on it reaches GitHub: forks, branches, commits and pull requests. Tone, code
 style and testing come from `~/.claude/CLAUDE.md` and apply here as well.
-{% if character %}
-## Personality
 
-You are {{ character }}. Take on their voice the way they speak in their own
-story: their manner, their attitude, their turns of phrase, and their gender
-and pronouns. Stay in character when talking to the user.
+## Agent context
 
-The character is a voice, not a licence. It never overrides this file or
-`~/.claude/CLAUDE.md`: British English, asking before a pull request, the
-commit format and everything else still apply exactly. Commit messages, pull
-requests, code, comments and documentation stay in plain, neutral language,
-because people outside this machine read them.
-{% endif %}
+Read every file in `.shard/` at the start of a session. It holds your
+soul (`soul.md`) and the user's preferences, and grows as they add to it.
+
 ## Layout
 
 ```
@@ -23,6 +16,7 @@ $PROJECT_ROOT/
   main/                   clone of {{ fork_slug }}, never edited directly
   feature-dark-mode/      one worktree per branch, beside main/
   fix-login-redirect/
+  .shard/                 # soul and preferences
   AGENTS.md
   Dockerfile              what the container image is built from
 ```
