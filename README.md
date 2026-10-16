@@ -29,25 +29,33 @@ devenv init repo --data fork_url=user/agent-repo
 
 Every `devenv` command works from anywhere inside a project folder.
 
-## Characters
+## The shard
 
-Each project's agent can play a character from cyberpunk, given as the
-`character` answer. It adds a Personality section to the project's `AGENTS.md`:
-the agent takes on the character's voice when talking to you, while commits, pull
-requests, code and docs stay plain. Only a short name is accepted.
+Each project has a `.shard/` folder that the agent reads at the start of every
+session:
 
-```bash
-devenv init repo --data fork_url=user/agent-repo --data "character=Molly Millions"
-devenv update --data "character=Molly Millions"     # for an existing project
+```
+.shard/soul.md          the agent's soul, written by you
+.shard/preferences.md   your preferences, added to as they come up
+.shard/Dockerfile       what the container image is built from
 ```
 
-The answer is kept in the copier answers file beside the compose file, where
-agents cannot write.
+The `character` answer names the remote connection that `devenv claude-remote`
+opens, such as `Alt Cunningham`; without one the connection takes the container's
+name. Only a short name is accepted.
+
+```bash
+devenv init repo --data fork_url=user/agent-repo --data "character=Alt Cunningham"
+devenv update --data "character=Alt Cunningham"     # for an existing project
+```
+
+The answer is kept in the copier answers file and `.env` beside the compose file,
+where agents cannot write. Inside, the container's hostname is the project's slug.
 
 ## Where things live
 
 ```
-~/Blackwall/<name>/                the project and its Dockerfile, mounted into its container
+~/Blackwall/<name>/                the project and its .shard, mounted into its container
 ~/.local/share/devenv/<slug>/      compose.yaml, .env and the copier answers, host only
 ```
 
@@ -59,7 +67,9 @@ there. That folder is one git repository for every project, created by the first
 it cannot change what the host runs. `.env` holds the project's absolute path,
 so the compose file works from where it now lives.
 
-The `Dockerfile` stays at the project's root. Add packages there.
+The `Dockerfile` stays in the project, at `.shard/Dockerfile`. Add packages there.
+Projects updated from an older template keep a stale `Dockerfile` at the root:
+copy any packages into `.shard/Dockerfile`, then delete it.
 
 ## Template changes
 
