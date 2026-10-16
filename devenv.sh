@@ -131,8 +131,12 @@ stage_project() {
         case ${file##*/} in compose.yaml|.env|.copier-answers.yml) continue ;; esac
         [ -f "$file" ] && cp -P "$file" "$work/"
     done
+    if [ -e "$PROJECT_DIR/.shard" ] || [ -L "$PROJECT_DIR/.shard" ]; then
+        cp -RP "$PROJECT_DIR/.shard" "$work/" || return 1
+    fi
     # cp -P copies a symlink as a link, including one swapped in after the -f test
-    [ -z "$(find "$work" -type l)" ] || { echo "$PROJECT_DIR has a symlinked file" >&2; return 1; }
+    [ -z "$(find "$work" ! -type f ! -type d)" ] \
+        || { echo "$PROJECT_DIR has a symlinked or special file" >&2; return 1; }
     for file in "${HOST_FILES[@]}"; do
         cp "$ENV_DIR/$file" "$work/" || return 1
     done
@@ -150,6 +154,17 @@ unstage_project() {
         # -T replaces whatever is there, never writing through a symlink planted in its place
         mv -fT "$file" "$PROJECT_DIR/${file##*/}" || return 1
     done
+    replace_shard "$work"
+}
+
+# swapped whole by rename, so nothing is written through a symlink planted inside the project's copy
+replace_shard() {
+    local work=$1
+    [ -d "$work/.shard" ] || return 0
+    if [ -e "$PROJECT_DIR/.shard" ] || [ -L "$PROJECT_DIR/.shard" ]; then
+        mv -T "$PROJECT_DIR/.shard" "$work/.shard.old" || return 1
+    fi
+    mv -T "$work/.shard" "$PROJECT_DIR/.shard"
 }
 
 # every container definition lives in one repository, created on first use
