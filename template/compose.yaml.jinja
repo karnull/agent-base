@@ -16,6 +16,11 @@ services:
     stdin_open: true
     tty: true
 
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
     working_dir: ${PROJECT_ROOT:?missing from .env}/main
     environment:
       PROJECT_ROOT: ${PROJECT_ROOT}
