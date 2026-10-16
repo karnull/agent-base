@@ -5,9 +5,10 @@ name: ${PROJECT_SLUG:?missing from .env}-agent
 services:
   agent:
     container_name: ${PROJECT_SLUG}-devcontainer
+    hostname: ${PROJECT_SLUG}
     build:
       context: .
-      dockerfile: ${PROJECT_ROOT:?missing from .env}/Dockerfile
+      dockerfile: ${PROJECT_ROOT:?missing from .env}/.shard/Dockerfile
     image: ${PROJECT_SLUG}-agent:latest
     pull_policy: build
     init: true

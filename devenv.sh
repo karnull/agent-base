@@ -43,7 +43,8 @@ Actions:
   delete                remove devcontainer
   logs                  follow devcontainer output
   exec <CMD>            run CMD in devcontainer
-  claude-remote         run claude code with remote connection
+  claude-remote         run claude code with remote connection, named after the
+                        character when there is one
   connect               open shell in devcontainer
   list                  list docker containers
 
@@ -55,7 +56,7 @@ Notes:
     one container
   - each project's compose.yaml, .env and copier answers live in
     ~/.local/share/devenv/<slug>, part of a git repository no container can
-    change; the Dockerfile stays in the project
+    change; the Dockerfile stays in the project's .shard folder
   - DEVENV_PROJECTS, DEVENV_HOME and DEVENV_TEMPLATE override the projects
     folder, the compose files folder and the template
 EOF
@@ -108,6 +109,10 @@ get_container_name() {
     echo "${name:-$(slugify "${PROJECT_DIR##*/}")-devcontainer}"
 }
 
+get_character() {
+    sed -n 's/^CHARACTER=//p' "$ENV_DIR/.env" | head -n 1
+}
+
 # these decide what the host runs, so they never stay where a container can write
 HOST_FILES=(compose.yaml .env .copier-answers.yml)
 
@@ -126,8 +131,12 @@ stage_project() {
         case ${file##*/} in compose.yaml|.env|.copier-answers.yml) continue ;; esac
         [ -f "$file" ] && cp -P "$file" "$work/"
     done
+    if [ -e "$PROJECT_DIR/.shard" ] || [ -L "$PROJECT_DIR/.shard" ]; then
+        cp -RP "$PROJECT_DIR/.shard" "$work/" || return 1
+    fi
     # cp -P copies a symlink as a link, including one swapped in after the -f test
-    [ -z "$(find "$work" -type l)" ] || { echo "$PROJECT_DIR has a symlinked file" >&2; return 1; }
+    [ -z "$(find "$work" ! -type f ! -type d)" ] \
+        || { echo "$PROJECT_DIR has a symlinked or special file" >&2; return 1; }
     for file in "${HOST_FILES[@]}"; do
         cp "$ENV_DIR/$file" "$work/" || return 1
     done
@@ -145,6 +154,17 @@ unstage_project() {
         # -T replaces whatever is there, never writing through a symlink planted in its place
         mv -fT "$file" "$PROJECT_DIR/${file##*/}" || return 1
     done
+    replace_shard "$work"
+}
+
+# swapped whole by rename, so nothing is written through a symlink planted inside the project's copy
+replace_shard() {
+    local work=$1
+    [ -d "$work/.shard" ] || return 0
+    if [ -e "$PROJECT_DIR/.shard" ] || [ -L "$PROJECT_DIR/.shard" ]; then
+        mv -T "$PROJECT_DIR/.shard" "$work/.shard.old" || return 1
+    fi
+    mv -T "$work/.shard" "$PROJECT_DIR/.shard"
 }
 
 # every container definition lives in one repository, created on first use
@@ -232,7 +252,8 @@ case "$ACTION" in
     claude-remote|cr)
         require_env
         container=$(get_container_name)
-        docker exec -w "$PWD" "$container" claude remote-control --name "$container"
+        character=$(get_character)
+        docker exec -w "$PWD" "$container" claude remote-control --name "${character:-$container}"
         exit
         ;;
 
