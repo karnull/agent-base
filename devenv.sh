@@ -43,7 +43,8 @@ Actions:
   delete                remove devcontainer
   logs                  follow devcontainer output
   exec <CMD>            run CMD in devcontainer
-  claude-remote         run claude code with remote connection
+  claude-remote         run claude code with remote connection, named after the
+                        character when there is one
   connect               open shell in devcontainer
   list                  list docker containers
 
@@ -106,6 +107,10 @@ get_container_name() {
         | sed -n 's/^[[:space:]]*container_name:[[:space:]]*//p' \
         | head -n 1 | tr -d "\"'[:space:]")
     echo "${name:-$(slugify "${PROJECT_DIR##*/}")-devcontainer}"
+}
+
+get_character() {
+    sed -n 's/^CHARACTER=//p' "$ENV_DIR/.env" | head -n 1
 }
 
 # these decide what the host runs, so they never stay where a container can write
@@ -232,7 +237,8 @@ case "$ACTION" in
     claude-remote|cr)
         require_env
         container=$(get_container_name)
-        docker exec -w "$PWD" "$container" claude remote-control --name "$container"
+        character=$(get_character)
+        docker exec -w "$PWD" "$container" claude remote-control --name "${character:-$container}"
         exit
         ;;
 
