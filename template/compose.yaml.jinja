@@ -19,6 +19,13 @@ services:
     working_dir: ${PROJECT_ROOT:?missing from .env}/main
     environment:
       PROJECT_ROOT: ${PROJECT_ROOT}
+{%- if character %}
+      # the character signs every commit made in this container, whatever the shared gitconfig says
+      GIT_AUTHOR_NAME: ${CHARACTER}
+      GIT_AUTHOR_EMAIL: ${CHARACTER_SLUG}@kargent.local
+      GIT_COMMITTER_NAME: ${CHARACTER}
+      GIT_COMMITTER_EMAIL: ${CHARACTER_SLUG}@kargent.local
+{%- endif %}
 
     volumes:
       - ${PROJECT_ROOT}:${PROJECT_ROOT}

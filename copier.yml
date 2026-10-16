@@ -61,6 +61,15 @@ fork_slug:
        | regex_replace('/$', '')
        | regex_replace('\.git$', '') }}
 
+character_slug:
+  type: str
+  when: false
+  default: >-
+    {{ character
+       | lower
+       | regex_replace('[^a-z0-9]+', '-')
+       | regex_replace('^-+|-+$', '') }}
+
 bot_account:
   type: str
   when: false
