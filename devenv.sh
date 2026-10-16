@@ -106,7 +106,7 @@ get_container_name() {
     name=$(compose config 2>/dev/null \
         | sed -n 's/^[[:space:]]*container_name:[[:space:]]*//p' \
         | head -n 1 | tr -d "\"'[:space:]")
-    echo "${name:-$(slugify "${PROJECT_DIR##*/}")-devcontainer}"
+    echo "${name:-$(slugify "${PROJECT_DIR##*/}")}"
 }
 
 get_character() {

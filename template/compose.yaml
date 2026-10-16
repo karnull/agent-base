@@ -4,7 +4,7 @@ name: ${PROJECT_SLUG:?missing from .env}-agent
 
 services:
   agent:
-    container_name: ${PROJECT_SLUG}-devcontainer
+    container_name: ${PROJECT_SLUG}
     hostname: ${PROJECT_SLUG}
     build:
       context: .
