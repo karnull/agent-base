@@ -98,7 +98,7 @@ require_env() {
 
 compose() {
     # values left in the shell would override the ones in the env's .env
-    env -u PROJECT_ROOT -u PROJECT_SLUG docker compose "${COMPOSE_ARGS[@]}" "$@"
+    env -u PROJECT_ROOT -u PROJECT_SLUG -u CHARACTER -u CHARACTER_SLUG docker compose "${COMPOSE_ARGS[@]}" "$@"
 }
 
 get_container_name() {
@@ -106,7 +106,7 @@ get_container_name() {
     name=$(compose config 2>/dev/null \
         | sed -n 's/^[[:space:]]*container_name:[[:space:]]*//p' \
         | head -n 1 | tr -d "\"'[:space:]")
-    echo "${name:-$(slugify "${PROJECT_DIR##*/}")-devcontainer}"
+    echo "${name:-$(slugify "${PROJECT_DIR##*/}")}"
 }
 
 get_character() {
