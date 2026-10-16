@@ -44,6 +44,11 @@ The `character` answer names the remote connection that `devenv claude-remote`
 opens, such as `Alt Cunningham`; without one the connection takes the container's
 name. Only a short name is accepted.
 
+The character also signs every commit made in the container. `Alt Cunningham`
+commits as `Alt Cunningham <alt-cunningham@kargent.local>`, overriding the
+shared `~/.gitconfig` for that project alone. Without a character, commits use
+the shared identity.
+
 ```bash
 devenv init repo --data fork_url=user/agent-repo --data "character=Alt Cunningham"
 devenv update --data "character=Alt Cunningham"     # for an existing project
