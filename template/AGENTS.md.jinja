@@ -18,14 +18,14 @@ $PROJECT_ROOT/
   fix-login-redirect/
   .shard/                 # soul and preferences
   AGENTS.md
-  Dockerfile              what the container image is built from
 ```
 
 `main/` exists to fetch history and cut branches from. You never commit there.
 
 The container's compose file and environment live on the host, outside the
-project folder. You cannot see or change them from in here. The `Dockerfile`
-is the one part kept here; change it only when the user asks. If the container
+project folder. You cannot see or change them from in here. The image is built
+from `.shard/Dockerfile`, the one part kept here; change it only when the user
+asks. If the container
 needs something different, such as an extra package, say so and the user will
 make the change.
 

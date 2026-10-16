@@ -56,7 +56,7 @@ Notes:
     one container
   - each project's compose.yaml, .env and copier answers live in
     ~/.local/share/devenv/<slug>, part of a git repository no container can
-    change; the Dockerfile stays in the project
+    change; the Dockerfile stays in the project's .shard folder
   - DEVENV_PROJECTS, DEVENV_HOME and DEVENV_TEMPLATE override the projects
     folder, the compose files folder and the template
 EOF
