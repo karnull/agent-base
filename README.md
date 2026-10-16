@@ -45,9 +45,9 @@ opens, such as `Alt Cunningham`; without one the connection takes the container'
 name. Only a short name is accepted.
 
 The character also signs every commit made in the container. `Alt Cunningham`
-commits as `Alt Cunningham <alt-cunningham@kargent.local>`, overriding the
-shared `~/.gitconfig` for that project alone. Without a character, commits use
-the shared identity.
+commits as `Alt Cunningham <alt-cunningham@kargent.local>`. Without a character,
+commits are signed `agent <agent@kargent.local>`. Your own `~/.gitconfig` is
+never mounted, so its identity and settings stay on the host.
 
 ```bash
 devenv init repo --data fork_url=user/agent-repo --data "character=Alt Cunningham"
