@@ -64,8 +64,6 @@ RUN group="$(awk -F: -v gid="${GID}" '$3 == gid { print $1 }' /etc/group)" \
 
 # push and pull over https using the gh login mounted from the host: gh hands its token
 # to git on demand, so no ssh key is mounted and `gh pr create` uses the same credential.
-# set at system level because the mounted ~/.gitconfig is read only. if that gitconfig
-# rewrites github urls to ssh, the rewrite wins and this helper is never consulted
 RUN git config --system credential."https://github.com".helper '!gh auth git-credential'
 
 
@@ -73,7 +71,6 @@ RUN git config --system credential."https://github.com".helper '!gh auth git-cre
 
 RUN mkdir -p "/home/${USERNAME}/.config/vim" "/home/${USERNAME}/.config/gh" \
         "/home/${USERNAME}/.claude" "${WORKSPACE_ROOT}" \
-    && touch "/home/${USERNAME}/.gitconfig" \
     && ln -s "/home/${USERNAME}/.config/vim" "/home/${USERNAME}/.vim" \
     && chown -R "${UID}:${GID}" "/home/${USERNAME}" "${WORKSPACE_ROOT}"
 
