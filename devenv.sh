@@ -9,6 +9,8 @@ ACTION=$1
 TEMPLATE=${DEVENV_TEMPLATE:-gh:karnull/agent-base}
 PROJECTS_DIR=${DEVENV_PROJECTS:-$HOME/Blackwall}
 ENVS_DIR=${DEVENV_HOME:-$HOME/.local/share/devenv}
+# fixed rather than overridable, as every compose file names this path
+CLAUDE_DIR=$HOME/.local/share/blackwall
 
 # a container can write the project's repositories, so their config must not run anything here
 untrusted_git() {
@@ -57,6 +59,9 @@ Notes:
   - each project's compose.yaml, .env and copier answers live in
     ~/.local/share/devenv/<slug>, part of a git repository no container can
     change; the Dockerfile stays in the project's .shard folder
+  - each container keeps its claude sessions and memory in
+    ~/.local/share/blackwall/cages/<slug>/claude, and reads the shared config
+    in ~/.local/share/blackwall/claude read-only
   - DEVENV_PROJECTS, DEVENV_HOME and DEVENV_TEMPLATE override the projects
     folder, the compose files folder and the template
 EOF
@@ -178,6 +183,14 @@ commit_env() {
         && git -C "$ENVS_DIR" commit -q -m "$1" -- "$ENV_DIR"
 }
 
+# made here because docker would create a missing mount source owned by root
+ensure_claude_dirs() {
+    local cage="$CLAUDE_DIR/cages/${ENV_DIR##*/}/claude"
+    mkdir -p "$cage" "$CLAUDE_DIR/claude/managed" "$CLAUDE_DIR/claude/skills" || return 1
+    # a new container skips the first-run prompts
+    [ -e "$cage/.claude.json" ] || echo '{"hasCompletedOnboarding": true}' > "$cage/.claude.json"
+}
+
 #-------------------------------------------------------------------------------
 # actions
 
@@ -202,6 +215,7 @@ case "$ACTION" in
             || error "could not move ${HOST_FILES[*]} from $PROJECT_DIR to $ENV_DIR"
         commit_env "$slug: compose file and environment for $PROJECT_DIR" \
             || error "could not commit $ENV_DIR in $ENVS_DIR"
+        ensure_claude_dirs || error "could not create the claude folders in $CLAUDE_DIR"
         echo "Start the container with: cd $PROJECT_DIR && devenv up"
         exit
         ;;
@@ -221,6 +235,7 @@ case "$ACTION" in
 
     start|up)
         require_env
+        ensure_claude_dirs || error "could not create the claude folders in $CLAUDE_DIR"
         compose up -d
         exit
         ;;
