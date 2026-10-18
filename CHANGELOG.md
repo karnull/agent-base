@@ -15,6 +15,7 @@
 * refactor/env-outside-project: each project's compose.yaml, .env and copier answers move to ~/.local/share/devenv/<slug>, a git repository out of reach of the container, while the Dockerfile moves to the project root; projects live in ~/Blackwall, the template is rendered from GitHub, devenv update works on a copy so it never runs git in the project's own repository, and each agent can play a cyberpunk character named by the new character answer. New containers' com.docker.compose.project.working_dir label points at ~/.local/share/devenv/<slug> rather than the project, which Uplink reads.
 * refactor/shard: each project's soul, preferences and Dockerfile live in .shard, which the agent reads at the start of every session and devenv update carries across; the Personality section is gone from AGENTS.md, the character answer names the remote connection instead, and the container's hostname is the project slug. Uplink must read the Dockerfile from .shard/Dockerfile.
 * fix/container-identity: containers are named after the project's slug, without the -devcontainer suffix, and commits made in one are signed by its character as <character-slug>@kargent.local.
+* chore/security-changes: containers run with no capabilities, each keeps its own Claude folder while the shared CLAUDE.md, settings and skills are read-only managed settings, an optional claude.env shares one token, the image builds from .shard alone, and memory and processes are capped.
 
 ## removed
 

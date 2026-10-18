@@ -7,14 +7,23 @@ services:
     container_name: ${PROJECT_SLUG}
     hostname: ${PROJECT_SLUG}
     build:
-      context: .
-      dockerfile: ${PROJECT_ROOT:?missing from .env}/.shard/Dockerfile
+      context: ${PROJECT_ROOT:?missing from .env}/.shard
+      dockerfile: Dockerfile
     image: ${PROJECT_SLUG}-agent:latest
     pull_policy: build
     init: true
     restart: unless-stopped
     stdin_open: true
     tty: true
+
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    # a runaway build or fork bomb stays inside the container rather than taking down the host
+    pids_limit: 1024
+    mem_limit: 8g
 
     working_dir: ${PROJECT_ROOT:?missing from .env}/main
     environment:
@@ -32,7 +41,15 @@ services:
       GIT_COMMITTER_EMAIL: agent@kargent.local
 {%- endif %}
 
+    # optional: CLAUDE_CODE_OAUTH_TOKEN for every container, kept in one file on the host
+    env_file:
+      - path: ${HOME}/.local/share/blackwall/claude.env
+        required: false
+
+    # each container has its own claude folder; the shared one is read-only, so none can plant a hook in another
     volumes:
       - ${PROJECT_ROOT}:${PROJECT_ROOT}
-      - ${HOME}/.claude:/home/dev/.claude
+      - ${HOME}/.local/share/blackwall/cages/${PROJECT_SLUG}/claude:/home/dev/.claude
+      - ${HOME}/.local/share/blackwall/claude/managed:/etc/claude-code:ro
+      - ${HOME}/.local/share/blackwall/claude/skills:/home/dev/.claude/skills:ro
       - ${HOME}/.config/gh:/home/dev/.config/gh
