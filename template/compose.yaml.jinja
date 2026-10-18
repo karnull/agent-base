@@ -21,6 +21,10 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # a runaway build or fork bomb stays inside the container rather than taking down the host
+    pids_limit: 1024
+    mem_limit: 8g
+
     working_dir: ${PROJECT_ROOT:?missing from .env}/main
     environment:
       PROJECT_ROOT: ${PROJECT_ROOT}
