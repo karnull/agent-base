@@ -8,7 +8,8 @@ of your fork in `main/`, and an `AGENTS.md` covering the git and GitHub workflow
 Once per machine, from this repository:
 
 ```bash
-cp CLAUDE.md ~/.claude/CLAUDE.md
+mkdir -p ~/.local/share/blackwall/claude/managed ~/.local/share/blackwall/claude/skills
+cp CLAUDE.md ~/.local/share/blackwall/claude/managed/CLAUDE.md
 docker build -t agent-base:latest --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" .
 ln -s "$PWD/devenv.sh" ~/.local/bin/devenv
 ```
@@ -73,8 +74,36 @@ it cannot change what the host runs. `.env` holds the project's absolute path,
 so the compose file works from where it now lives.
 
 The `Dockerfile` stays in the project, at `.shard/Dockerfile`. Add packages there.
-Projects updated from an older template keep a stale `Dockerfile` at the root:
-copy any packages into `.shard/Dockerfile`, then delete it.
+The image is built from `.shard` alone, so anything else the build needs goes in
+that folder too.
+
+## Claude's files
+
+```
+~/.local/share/blackwall/
+  claude.env                     optional, CLAUDE_CODE_OAUTH_TOKEN=..., chmod 600
+  claude/managed/                read-only in every container, at /etc/claude-code
+    CLAUDE.md
+    managed-settings.json        settings and hooks every agent gets
+  claude/skills/                 read-only in every container
+  cages/<slug>/claude/           one per project: sessions, memory, history, login
+```
+
+Each container has its own Claude folder, so one agent cannot read or rewrite
+another's sessions or memory. The shared `CLAUDE.md` and settings are Claude
+Code's managed settings, which take precedence over everything else and cannot
+be changed from inside a container. Each container still has its own
+`settings.json`, which only affects that container.
+
+`devenv init` and `devenv up` create these folders. `devenv delete` leaves the
+project's Claude folder alone, so sessions survive the container being
+recreated; remove it by hand once the project is gone.
+
+Without `claude.env`, log in once inside each container. If you keep a token
+there instead, it is shared by every container and readable by any process in
+them.
+
+Each container is limited to 8 GB of memory and 1024 processes.
 
 ## Template changes
 
