@@ -16,6 +16,7 @@
 * refactor/shard: each project's soul, preferences and Dockerfile live in .shard, which the agent reads at the start of every session and devenv update carries across; the Personality section is gone from AGENTS.md, the character answer names the remote connection instead, and the container's hostname is the project slug. Uplink must read the Dockerfile from .shard/Dockerfile.
 * fix/container-identity: containers are named after the project's slug, without the -devcontainer suffix, and commits made in one are signed by its character as <character-slug>@kargent.local.
 * chore/security-changes: containers run with no capabilities, each keeps its own Claude folder while the shared CLAUDE.md, settings and skills are read-only managed settings, an optional claude.env shares one token, the image builds from .shard alone, and memory and processes are capped.
+* feature/shared-host-config: every container shares the host's ~/.local/blackice/claude, so one login covers them all and remote-control works; the shared token file is gone, the read-only managed settings in ~/.local/blackice/claude-managed are seeded to ignore hooks and MCP servers from anywhere else, compose files move to ~/.local/blackice/devenv, gh and git authenticate with a GH_TOKEN kept in ~/.local/blackice/gh.env rather than a shared gh folder, every container reads ~/.local/blackice/configs/vim as its vimrc, images are built with the uid and gid in each project's .env, projects live under /home/kaerosol, and every agent signs its commits as <name>@kaerosol.bot.
 
 ## removed
 

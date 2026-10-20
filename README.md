@@ -8,11 +8,15 @@ of your fork in `main/`, and an `AGENTS.md` covering the git and GitHub workflow
 Once per machine, from this repository:
 
 ```bash
-mkdir -p ~/.local/share/blackwall/claude/managed ~/.local/share/blackwall/claude/skills
-cp CLAUDE.md ~/.local/share/blackwall/claude/managed/CLAUDE.md
+mkdir -p ~/.local/blackice/claude-managed ~/.local/blackice/configs
+touch ~/.local/blackice/configs/vim
+cp CLAUDE.md ~/.local/blackice/claude-managed/CLAUDE.md
 docker build -t agent-base:latest --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" .
 ln -s "$PWD/devenv.sh" ~/.local/bin/devenv
 ```
+
+`devenv` runs from this clone rather than from GitHub, so pull it to pick up
+changes to `devenv.sh`.
 
 ## Usage
 
@@ -62,12 +66,14 @@ where agents cannot write. Inside, the container's hostname is the project's slu
 
 ```
 ~/Blackwall/<name>/                the project and its .shard, mounted into its container
-~/.local/share/devenv/<slug>/      compose.yaml, .env and the copier answers, host only
+~/.local/blackice/devenv/<slug>/   compose.yaml, .env and the copier answers, host only
+~/.local/blackice/gh.env           GH_TOKEN=..., read by every container, chmod 600
+~/.local/blackice/configs/vim      a file, mounted read-only into every container as ~/.vimrc
 ```
 
 `devenv init` renders the whole template into `~/Blackwall/<name>`, then moves
 `compose.yaml`, `.env` and `.copier-answers.yml` out to
-`~/.local/share/devenv/<slug>` and commits them
+`~/.local/blackice/devenv/<slug>` and commits them
 there. That folder is one git repository for every project, created by the first
 `devenv init`. Nothing running in a container can change the compose file, so
 it cannot change what the host runs. `.env` holds the project's absolute path,
@@ -77,31 +83,42 @@ The `Dockerfile` stays in the project, at `.shard/Dockerfile`. Add packages ther
 The image is built from `.shard` alone, so anything else the build needs goes in
 that folder too.
 
+`gh` and `git` authenticate with the `GH_TOKEN` in `~/.local/blackice/gh.env`.
+It is never committed with the rest of a project's files, but any process in any
+container can read it, so use a fine-grained token limited to the agent's own
+repositories. Without the file, `gh` is logged out and pushes fail.
+
 ## Claude's files
 
 ```
-~/.local/share/blackwall/
-  claude.env                     optional, CLAUDE_CODE_OAUTH_TOKEN=..., chmod 600
-  claude/managed/                read-only in every container, at /etc/claude-code
-    CLAUDE.md
-    managed-settings.json        settings and hooks every agent gets
-  claude/skills/                 read-only in every container
-  cages/<slug>/claude/           one per project: sessions, memory, history, login
+~/.local/blackice/claude/                 shared by every container: login, sessions, memory
+~/.local/blackice/claude-managed/         read-only in every container, at /etc/claude-code
+  CLAUDE.md
+  managed-settings.json
 ```
 
-Each container has its own Claude folder, so one agent cannot read or rewrite
-another's sessions or memory. The shared `CLAUDE.md` and settings are Claude
-Code's managed settings, which take precedence over everything else and cannot
-be changed from inside a container. Each container still has its own
-`settings.json`, which only affects that container.
+Every container mounts `~/.local/blackice/claude` as its Claude folder, so logging
+in once, inside any container, covers them all, remote-control included.
 
-`devenv init` and `devenv up` create these folders. `devenv delete` leaves the
-project's Claude folder alone, so sessions survive the container being
-recreated; remove it by hand once the project is gone.
+The cost is that any agent can read and rewrite every other project's sessions,
+memory and history, along with the shared login. The managed settings limit what
+it can do with that. They take precedence over everything else and cannot be
+changed from inside a container. `devenv` creates `managed-settings.json` on
+first use with:
 
-Without `claude.env`, log in once inside each container. If you keep a token
-there instead, it is shared by every container and readable by any process in
-them.
+```json
+{
+  "allowManagedHooksOnly": true,
+  "allowManagedMcpServersOnly": true
+}
+```
+
+so hooks and MCP servers written into the shared folder by one agent never run
+in the others. Hooks you do want go in `managed-settings.json` itself, and MCP
+servers you do want are listed under `allowedMcpServers` there. A `CLAUDE.md` or
+skill planted in the shared folder still reaches every container and can steer
+its agent, including into running a script, so treat what is in there as
+untrusted.
 
 Each container is limited to 8 GB of memory and 1024 processes.
 
@@ -119,7 +136,7 @@ DEVENV_TEMPLATE=gh:karshPrime/agent-base devenv init repo --vcs-ref <branch>
 ```
 
 To pick up template changes, run `devenv update` anywhere in the project, then
-review and commit the result in both the project folder and `~/.local/share/devenv`.
+review and commit the result in both the project folder and `~/.local/blackice/devenv`.
 Copier works on a copy of the project's files with a fresh git repository, so
 nothing in the project's own `.git` runs on the host, and the results are moved
 back. A symlinked file at the project's root stops the update. Anything after
