@@ -77,7 +77,7 @@ error() {
 # helper functions
 
 slugify() {
-    echo "$1" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9_-]\{1,\}/-/g; s/^-*//; s/-*$//'
+    echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]\{1,\}/-/g; s/^-*//; s/-*$//'
 }
 
 # the folder directly inside PROJECTS_DIR that holds the current directory
