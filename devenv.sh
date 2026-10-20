@@ -8,9 +8,10 @@ ACTION=$1
 # rendered from github, never a local copy, so only pushed template changes reach a project
 TEMPLATE=${DEVENV_TEMPLATE:-gh:karnull/agent-base}
 PROJECTS_DIR=${DEVENV_PROJECTS:-$HOME/Blackwall}
-ENVS_DIR=${DEVENV_HOME:-$HOME/.local/share/devenv}
-# fixed rather than overridable, as every compose file names this path
-CLAUDE_DIR=$HOME/.local/share/blackwall
+ENVS_DIR=${DEVENV_HOME:-$HOME/.local/blackice/devenv}
+# fixed rather than overridable, as every compose file names these paths
+CLAUDE_DIR=$HOME/.local/blackice/claude
+MANAGED_DIR=$HOME/.local/blackice/claude-managed
 
 # a container can write the project's repositories, so their config must not run anything here
 untrusted_git() {
@@ -57,11 +58,10 @@ Notes:
   - works from anywhere inside a project, so worktrees beside main/ share the
     one container
   - each project's compose.yaml, .env and copier answers live in
-    ~/.local/share/devenv/<slug>, part of a git repository no container can
+    ~/.local/blackice/devenv/<slug>, part of a git repository no container can
     change; the Dockerfile stays in the project's .shard folder
-  - each container keeps its claude sessions and memory in
-    ~/.local/share/blackwall/cages/<slug>/claude, and reads the shared config
-    in ~/.local/share/blackwall/claude read-only
+  - every container shares ~/.local/blackice/claude, and reads the managed
+    settings in ~/.local/blackice/claude-managed read-only
   - DEVENV_PROJECTS, DEVENV_HOME and DEVENV_TEMPLATE override the projects
     folder, the compose files folder and the template
 EOF
@@ -185,10 +185,10 @@ commit_env() {
 
 # made here because docker would create a missing mount source owned by root
 ensure_claude_dirs() {
-    local cage="$CLAUDE_DIR/cages/${ENV_DIR##*/}/claude"
-    mkdir -p "$cage" "$CLAUDE_DIR/claude/managed" "$CLAUDE_DIR/claude/skills" || return 1
-    # a new container skips the first-run prompts
-    [ -e "$cage/.claude.json" ] || echo '{"hasCompletedOnboarding": true}' > "$cage/.claude.json"
+    mkdir -p "$CLAUDE_DIR" "$MANAGED_DIR" || return 1
+    [ -e "$MANAGED_DIR/managed-settings.json" ] && return 0
+    printf '%s\n' '{' '  "allowManagedHooksOnly": true,' '  "allowManagedMcpServersOnly": true' '}' \
+        > "$MANAGED_DIR/managed-settings.json"
 }
 
 #-------------------------------------------------------------------------------
@@ -215,7 +215,7 @@ case "$ACTION" in
             || error "could not move ${HOST_FILES[*]} from $PROJECT_DIR to $ENV_DIR"
         commit_env "$slug: compose file and environment for $PROJECT_DIR" \
             || error "could not commit $ENV_DIR in $ENVS_DIR"
-        ensure_claude_dirs || error "could not create the claude folders in $CLAUDE_DIR"
+        ensure_claude_dirs || error "could not create $CLAUDE_DIR and $MANAGED_DIR"
         echo "Start the container with: cd $PROJECT_DIR && devenv up"
         exit
         ;;
@@ -235,7 +235,7 @@ case "$ACTION" in
 
     start|up)
         require_env
-        ensure_claude_dirs || error "could not create the claude folders in $CLAUDE_DIR"
+        ensure_claude_dirs || error "could not create $CLAUDE_DIR and $MANAGED_DIR"
         compose up -d
         exit
         ;;

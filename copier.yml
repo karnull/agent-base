@@ -19,7 +19,7 @@ project_name:
 
 project_slug:
   type: str
-  help: "Lower-case name for the container, the image and its folder in ~/.local/share/devenv"
+  help: "Lower-case name for the container, the image and its folder in ~/.local/blackice/devenv"
   default: >-
     {{ project_name
        | lower
