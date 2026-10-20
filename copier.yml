@@ -11,7 +11,7 @@ _envops:
 projects_dir:
   type: str
   help: "Folder holding every project"
-  default: /home/karsh/Blackwall
+  default: /home/kaerosol/Blackwall
 
 project_name:
   type: str

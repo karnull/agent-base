@@ -35,14 +35,14 @@ services:
       # the character signs every commit made in this container, or a plain agent when there is none
 {%- if character %}
       GIT_AUTHOR_NAME: ${CHARACTER}
-      GIT_AUTHOR_EMAIL: ${CHARACTER_SLUG}@kargent.local
+      GIT_AUTHOR_EMAIL: ${CHARACTER_SLUG}@kaerosol.bot
       GIT_COMMITTER_NAME: ${CHARACTER}
-      GIT_COMMITTER_EMAIL: ${CHARACTER_SLUG}@kargent.local
+      GIT_COMMITTER_EMAIL: ${CHARACTER_SLUG}@kaerosol.bot
 {%- else %}
       GIT_AUTHOR_NAME: agent
-      GIT_AUTHOR_EMAIL: agent@kargent.local
+      GIT_AUTHOR_EMAIL: agent@kaerosol.bot
       GIT_COMMITTER_NAME: agent
-      GIT_COMMITTER_EMAIL: agent@kargent.local
+      GIT_COMMITTER_EMAIL: agent@kaerosol.bot
 {%- endif %}
 
     # the claude folder is shared; read-only managed settings stop hooks or mcp servers planted in it from running
