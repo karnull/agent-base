@@ -12,6 +12,7 @@ ENVS_DIR=${DEVENV_HOME:-$HOME/.local/blackice/devenv}
 # fixed rather than overridable, as every compose file names these paths
 CLAUDE_DIR=$HOME/.local/blackice/claude
 MANAGED_DIR=$HOME/.local/blackice/claude-managed
+VIMRC=$HOME/.local/blackice/configs/vim
 
 # a container can write the project's repositories, so their config must not run anything here
 untrusted_git() {
@@ -185,7 +186,7 @@ commit_env() {
 
 # made here because docker would create a missing mount source owned by root
 ensure_claude_dirs() {
-    mkdir -p "$CLAUDE_DIR" "$MANAGED_DIR" || return 1
+    mkdir -p "$CLAUDE_DIR" "$MANAGED_DIR" "${VIMRC%/*}" && touch "$VIMRC" || return 1
     [ -e "$MANAGED_DIR/managed-settings.json" ] && return 0
     printf '%s\n' '{' '  "allowManagedHooksOnly": true,' '  "allowManagedMcpServersOnly": true' '}' \
         > "$MANAGED_DIR/managed-settings.json"

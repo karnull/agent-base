@@ -69,9 +69,7 @@ RUN git config --system credential."https://github.com".helper '!gh auth git-cre
 
 #---------------------------------------------------------------------------------------------------
 
-RUN mkdir -p "/home/${USERNAME}/.config/vim" "/home/${USERNAME}/.config/gh" \
-        "/home/${USERNAME}/.claude" "${WORKSPACE_ROOT}" \
-    && ln -s "/home/${USERNAME}/.config/vim" "/home/${USERNAME}/.vim" \
+RUN mkdir -p "/home/${USERNAME}/.config/gh" "/home/${USERNAME}/.claude" "${WORKSPACE_ROOT}" \
     && chown -R "${UID}:${GID}" "/home/${USERNAME}" "${WORKSPACE_ROOT}"
 
 USER ${USERNAME}
