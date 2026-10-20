@@ -62,8 +62,8 @@ RUN group="$(awk -F: -v gid="${GID}" '$3 == gid { print $1 }' /etc/group)" \
 
 #---------------------------------------------------------------------------------------------------
 
-# push and pull over https using the gh login mounted from the host: gh hands its token
-# to git on demand, so no ssh key is mounted and `gh pr create` uses the same credential.
+# push and pull over https using GH_TOKEN from the host: gh hands it to git on demand,
+# so no ssh key is mounted and `gh pr create` uses the same credential.
 RUN git config --system credential."https://github.com".helper '!gh auth git-credential'
 
 

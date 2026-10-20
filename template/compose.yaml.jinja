@@ -45,10 +45,14 @@ services:
       GIT_COMMITTER_EMAIL: agent@kaerosol.bot
 {%- endif %}
 
+    # GH_TOKEN for gh and git, kept outside the devenv repository so it never lands in a commit
+    env_file:
+      - path: ${HOME}/.local/blackice/gh.env
+        required: false
+
     # the claude folder is shared; read-only managed settings stop hooks or mcp servers planted in it from running
     volumes:
       - ${PROJECT_ROOT}:${PROJECT_ROOT}
       - ${HOME}/.local/blackice/claude:/home/dev/.claude
       - ${HOME}/.local/blackice/claude-managed:/etc/claude-code:ro
-      - ${HOME}/.local/blackice/gh:/home/dev/.config/gh
       - ${HOME}/.local/blackice/configs/vim:/home/dev/.vimrc:ro
