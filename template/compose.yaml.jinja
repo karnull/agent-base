@@ -9,6 +9,10 @@ services:
     build:
       context: ${PROJECT_ROOT:?missing from .env}/.shard
       dockerfile: Dockerfile
+      # dev is built with the host's uid/gid so bind-mounted files are writable without any capabilities
+      args:
+        UID: ${HOST_UID:?missing from .env}
+        GID: ${HOST_GID:?missing from .env}
     image: ${PROJECT_SLUG}-agent:latest
     pull_policy: build
     init: true
@@ -31,25 +35,24 @@ services:
       # the character signs every commit made in this container, or a plain agent when there is none
 {%- if character %}
       GIT_AUTHOR_NAME: ${CHARACTER}
-      GIT_AUTHOR_EMAIL: ${CHARACTER_SLUG}@kargent.local
+      GIT_AUTHOR_EMAIL: ${CHARACTER_SLUG}@kaerosol.bot
       GIT_COMMITTER_NAME: ${CHARACTER}
-      GIT_COMMITTER_EMAIL: ${CHARACTER_SLUG}@kargent.local
+      GIT_COMMITTER_EMAIL: ${CHARACTER_SLUG}@kaerosol.bot
 {%- else %}
       GIT_AUTHOR_NAME: agent
-      GIT_AUTHOR_EMAIL: agent@kargent.local
+      GIT_AUTHOR_EMAIL: agent@kaerosol.bot
       GIT_COMMITTER_NAME: agent
-      GIT_COMMITTER_EMAIL: agent@kargent.local
+      GIT_COMMITTER_EMAIL: agent@kaerosol.bot
 {%- endif %}
 
-    # optional: CLAUDE_CODE_OAUTH_TOKEN for every container, kept in one file on the host
+    # GH_TOKEN for gh and git, kept outside the devenv repository so it never lands in a commit
     env_file:
-      - path: ${HOME}/.local/share/blackwall/claude.env
+      - path: ${HOME}/.local/blackice/gh.env
         required: false
 
-    # each container has its own claude folder; the shared one is read-only, so none can plant a hook in another
+    # the claude folder is shared; read-only managed settings stop hooks or mcp servers planted in it from running
     volumes:
       - ${PROJECT_ROOT}:${PROJECT_ROOT}
-      - ${HOME}/.local/share/blackwall/cages/${PROJECT_SLUG}/claude:/home/dev/.claude
-      - ${HOME}/.local/share/blackwall/claude/managed:/etc/claude-code:ro
-      - ${HOME}/.local/share/blackwall/claude/skills:/home/dev/.claude/skills:ro
-      - ${HOME}/.config/gh:/home/dev/.config/gh
+      - ${HOME}/.local/blackice/claude:/home/dev/.claude
+      - ${HOME}/.local/blackice/claude-managed:/etc/claude-code:ro
+      - ${HOME}/.local/blackice/configs/vim:/home/dev/.vimrc:ro

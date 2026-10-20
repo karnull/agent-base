@@ -11,7 +11,7 @@ ARG GID=1000
 
 # each project is bind mounted at the SAME absolute path it has on the host, and nothing
 # else is mounted, so a container sees its own project and an otherwise empty parent.
-ARG WORKSPACE_ROOT=/home/karsh/Blackwall
+ARG WORKSPACE_ROOT=/home/kaerosol/Blackwall
 
 ARG TZ=Australia/Melbourne
 
@@ -62,16 +62,14 @@ RUN group="$(awk -F: -v gid="${GID}" '$3 == gid { print $1 }' /etc/group)" \
 
 #---------------------------------------------------------------------------------------------------
 
-# push and pull over https using the gh login mounted from the host: gh hands its token
-# to git on demand, so no ssh key is mounted and `gh pr create` uses the same credential.
+# push and pull over https using GH_TOKEN from the host: gh hands it to git on demand,
+# so no ssh key is mounted and `gh pr create` uses the same credential.
 RUN git config --system credential."https://github.com".helper '!gh auth git-credential'
 
 
 #---------------------------------------------------------------------------------------------------
 
-RUN mkdir -p "/home/${USERNAME}/.config/vim" "/home/${USERNAME}/.config/gh" \
-        "/home/${USERNAME}/.claude" "${WORKSPACE_ROOT}" \
-    && ln -s "/home/${USERNAME}/.config/vim" "/home/${USERNAME}/.vim" \
+RUN mkdir -p "/home/${USERNAME}/.config/gh" "/home/${USERNAME}/.claude" "${WORKSPACE_ROOT}" \
     && chown -R "${UID}:${GID}" "/home/${USERNAME}" "${WORKSPACE_ROOT}"
 
 USER ${USERNAME}

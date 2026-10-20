@@ -11,15 +11,27 @@ _envops:
 projects_dir:
   type: str
   help: "Folder holding every project"
-  default: /home/karsh/Blackwall
+  default: /home/kaerosol/Blackwall
 
 project_name:
   type: str
   help: "Name of the project's folder inside the projects folder"
 
+host_uid:
+  type: int
+  help: "uid the container's dev user is built with"
+  when: false
+  default: 1000
+
+host_gid:
+  type: int
+  help: "gid the container's dev user is built with"
+  when: false
+  default: 1000
+
 project_slug:
   type: str
-  help: "Lower-case name for the container, the image and its folder in ~/.local/share/devenv"
+  help: "Lower-case name for the container, the image and its folder in ~/.local/blackice/devenv"
   default: >-
     {{ project_name
        | lower
