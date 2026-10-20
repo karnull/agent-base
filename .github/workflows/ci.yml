@@ -1,0 +1,82 @@
+name: ci
+
+# pull_request rather than pull_request_target, so a fork's code never runs with this repository's secrets
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # renovate: datasource=github-releases depName=astral-sh/uv
+  UV_VERSION: 0.13.3
+  # renovate: datasource=pypi depName=copier
+  COPIER_VERSION: 9.19.1
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: shellcheck --version && shellcheck devenv.sh
+
+  hadolint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker://hadolint/hadolint:v2.15.1@sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d
+        with:
+          args: /bin/hadolint Dockerfile template/.shard/Dockerfile
+
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: base image
+        run: docker build --build-arg UID=1000 --build-arg GID=1000 -t agent-base:latest .
+      - name: project image on top of it
+        run: docker build -t ci-test-agent:latest template/.shard
+      - name: tools in the project image
+        run: docker run --rm ci-test-agent:latest sh -c 'git --version && gh --version && claude --version && id'
+
+  render:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        character: ["", "Alt Cunningham"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+      - name: render the template
+        env:
+          CHARACTER: ${{ matrix.character }}
+        run: |
+          uvx "copier@$COPIER_VERSION" copy --trust --skip-tasks --defaults --vcs-ref HEAD \
+            --data project_name=ci-test --data fork_url=karnull/agent-base \
+            --data "character=$CHARACTER" . "$RUNNER_TEMP/out"
+      - name: compose file is valid
+        env:
+          EXPECTED_AUTHOR: ${{ matrix.character || 'agent' }}
+        run: |
+          docker compose --project-directory "$RUNNER_TEMP/out" -f "$RUNNER_TEMP/out/compose.yaml" \
+            config --format json | tee "$RUNNER_TEMP/config.json"
+          jq -e --arg author "$EXPECTED_AUTHOR" \
+            '.services.agent.environment.GIT_AUTHOR_NAME == $author' "$RUNNER_TEMP/config.json"
