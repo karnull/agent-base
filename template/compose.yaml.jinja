@@ -9,6 +9,10 @@ services:
     build:
       context: ${PROJECT_ROOT:?missing from .env}/.shard
       dockerfile: Dockerfile
+      # dev is built with the host's uid/gid so bind-mounted files are writable without any capabilities
+      args:
+        UID: ${HOST_UID:?missing from .env}
+        GID: ${HOST_GID:?missing from .env}
     image: ${PROJECT_SLUG}-agent:latest
     pull_policy: build
     init: true
