@@ -70,7 +70,7 @@ jobs:
           CHARACTER: ${{ matrix.character }}
         run: |
           uvx "copier@$COPIER_VERSION" copy --trust --skip-tasks --defaults --vcs-ref HEAD \
-            --data project_name=ci-test --data fork_url=karnull/agent-base \
+            --data project_name=ci-test --data fork_url=karshosphere/agent-base \
             --data "character=$CHARACTER" . "$RUNNER_TEMP/out"
       - name: compose file is valid
         env:
