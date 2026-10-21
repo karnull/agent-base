@@ -158,3 +158,37 @@ their reasons. Every action, image and tool the workflow uses is pinned to an
 exact version, and the workflow has read-only access to the repository. It runs
 on `pull_request`, never `pull_request_target`, so a fork's code never sees this
 repository's secrets.
+
+## Dependency updates
+
+Every version this repository depends on is pinned: the Alpine base image by
+digest, GitHub Actions by commit, and tools by exact version. Renovate keeps
+those pins current. It runs from `.github/workflows/renovate.yml` every Sunday
+morning and opens one pull request per update, following `renovate.json`.
+Releases younger than seven days are held back, and nothing is merged
+automatically. Its Dependency Dashboard issue lists what is waiting.
+
+A version Renovate would not otherwise find is marked with a comment on the line
+above it:
+
+```yaml
+# renovate: datasource=pypi depName=copier
+COPIER_VERSION: 9.19.1
+```
+
+Packages installed with `apk add` are not pinned. Alpine removes old versions
+from its repositories, so a pinned package stops building; the pinned base image
+covers them instead.
+
+Renovate needs a token, set up once in `karnull/agent-base`:
+
+1. Create a fine-grained personal access token with access to
+   `karnull/agent-base` only, and these repository permissions: Contents,
+   Pull requests, Issues and Workflows read and write, Metadata read.
+2. Save it as the repository secret `RENOVATE_TOKEN`.
+
+The workflow's own token cannot be used, as pull requests opened with it do not
+start CI.
+
+To try it, run the renovate workflow from the Actions tab with a dry run of
+`full`. The log lists every dependency found and the updates it would open.

@@ -18,6 +18,7 @@
 * chore/security-changes: containers run with no capabilities, each keeps its own Claude folder while the shared CLAUDE.md, settings and skills are read-only managed settings, an optional claude.env shares one token, the image builds from .shard alone, and memory and processes are capped.
 * feature/shared-host-config: every container shares the host's ~/.local/blackice/claude, so one login covers them all and remote-control works; the shared token file is gone, the read-only managed settings in ~/.local/blackice/claude-managed are seeded to ignore hooks and MCP servers from anywhere else, compose files move to ~/.local/blackice/devenv, gh and git authenticate with a GH_TOKEN kept in ~/.local/blackice/gh.env rather than a shared gh folder, every container reads ~/.local/blackice/configs/vim as its vimrc, images are built with the uid and gid in each project's .env, projects live under /home/kaerosol, and every agent signs its commits as <name>@kaerosol.bot.
 * feature/ci: pull requests are checked with shellcheck and hadolint, the base and project images are built, and the template is rendered and its compose file validated, all with pinned tools; devenv claude-remote starts its sessions in auto permission mode.
+* feature/renovate: the alpine base image is pinned by digest, and a self-hosted renovate opens weekly pull requests to update every pinned version, holding back releases younger than a week.
 
 ## removed
 
