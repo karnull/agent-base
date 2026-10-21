@@ -134,7 +134,8 @@ move_host_files() {
 stage_project() {
     local work=$1 file
     for file in "$PROJECT_DIR"/* "$PROJECT_DIR"/.[!.]*; do
-        case ${file##*/} in compose.yaml|.env|.copier-answers.yml) continue ;; esac
+        # a .git file can point git at a repository the container controls, and its hooks would run here
+        case ${file##*/} in compose.yaml|.env|.copier-answers.yml|.git) continue ;; esac
         [ -f "$file" ] && cp -P "$file" "$work/"
     done
     if [ -e "$PROJECT_DIR/.shard" ] || [ -L "$PROJECT_DIR/.shard" ]; then
