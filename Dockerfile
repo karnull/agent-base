@@ -5,6 +5,8 @@
 ARG ALPINE_VERSION=3.24
 FROM alpine:${ALPINE_VERSION}
 
+# a user name, not a secret
+# hadolint ignore=DL3064
 ARG USERNAME=dev
 ARG UID=1000
 ARG GID=1000
@@ -38,6 +40,8 @@ ARG CLAUDE_CODE_KEY_SHA256=395759c1f7449ef4cdef305a42e820f3c766d6090d142634ebdb0
 ARG CLAUDE_CODE_CHANNEL=stable
 
 # anthropic's signed apk repository: pin the key, then let apk check the packages
+# the only pipe feeds echo into sha256sum, so pipefail would catch nothing
+# hadolint ignore=DL4006
 RUN wget -q -O /etc/apk/keys/claude-code.rsa.pub \
         https://downloads.claude.ai/keys/claude-code.rsa.pub \
     && if ! echo "${CLAUDE_CODE_KEY_SHA256}  /etc/apk/keys/claude-code.rsa.pub" \

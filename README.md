@@ -141,3 +141,20 @@ Copier works on a copy of the project's files with a fresh git repository, so
 nothing in the project's own `.git` runs on the host, and the results are moved
 back. A symlinked file at the project's root stops the update. Anything after
 `update` is passed to copier.
+
+## CI
+
+Every pull request and every push to `main` runs `.github/workflows/ci.yml`:
+
+```
+shellcheck   devenv.sh
+hadolint     Dockerfile and template/.shard/Dockerfile
+build        the base image, then a project image on top of it
+render       the template with and without a character, then docker compose config
+```
+
+Deliberate exceptions to hadolint's rules are listed in `.hadolint.yaml` with
+their reasons. Every action, image and tool the workflow uses is pinned to an
+exact version, and the workflow has read-only access to the repository. It runs
+on `pull_request`, never `pull_request_target`, so a fork's code never sees this
+repository's secrets.
