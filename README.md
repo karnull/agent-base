@@ -49,6 +49,11 @@ The `character` answer names the remote connection that `devenv claude-remote`
 opens, such as `Alt Cunningham`; without one the connection takes the container's
 name. Only a short name is accepted.
 
+`devenv claude-remote` reattaches to the remote session it last ran in the same
+folder, when there is one from the last few hours, so restarting or updating a
+container does not lose it. Otherwise it starts a new session and says so. Its
+sessions run in auto permission mode.
+
 The character also signs every commit made in the container. `Alt Cunningham`
 commits as `Alt Cunningham <alt-cunningham@kaerosol.bot>`. Without a character,
 commits are signed `agent <agent@kaerosol.bot>`. Your own `~/.gitconfig` is
@@ -139,8 +144,11 @@ To pick up template changes, run `devenv update` anywhere in the project, then
 review and commit the result in both the project folder and `~/.local/blackice/devenv`.
 Copier works on a copy of the project's files with a fresh git repository, so
 nothing in the project's own `.git` runs on the host, and the results are moved
-back. A symlinked file at the project's root stops the update. Anything after
-`update` is passed to copier.
+back. The project's `.git` is never copied, even when it is a file, and a
+symlinked file at the project's root stops the update. Anything after
+`update` is passed to copier. A file the template drops or renames, such as the
+old `AGENTS.md`, is removed from the project; anything the template never had is
+left alone.
 
 ## CI
 
