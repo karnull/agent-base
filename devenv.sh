@@ -269,7 +269,7 @@ case "$ACTION" in
         require_env
         container=$(get_container_name)
         character=$(get_character)
-        docker exec -w "$PWD" "$container" claude remote-control --name "${character:-$container}"
+        docker exec -w "$PWD" "$container" claude remote-control --permission-mode auto --name "${character:-$container}"
         exit
         ;;
 
