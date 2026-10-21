@@ -1,7 +1,7 @@
 # agent-base
 
 A Copier template that gives each project its own Claude Code container, a clone
-of your fork in `main/`, and an `AGENTS.md` covering the git and GitHub workflow.
+of your fork in `main/`, and a `CLAUDE.md` covering the git and GitHub workflow.
 
 ## Setup
 

@@ -1,5 +1,5 @@
 # track only the generated files; main/ and the worktrees are repositories of their own
 /*
 !/.gitignore
-!/AGENTS.md
+!/CLAUDE.md
 !/.shard/
