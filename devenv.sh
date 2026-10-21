@@ -6,7 +6,7 @@ ACTION=$1
 [ $# -gt 0 ] && shift
 
 # rendered from github, never a local copy, so only pushed template changes reach a project
-TEMPLATE=${DEVENV_TEMPLATE:-gh:karnull/agent-base}
+TEMPLATE=${DEVENV_TEMPLATE:-gh:karshosphere/agent-base}
 PROJECTS_DIR=${DEVENV_PROJECTS:-$HOME/Blackwall}
 ENVS_DIR=${DEVENV_HOME:-$HOME/.local/blackice/devenv}
 # fixed rather than overridable, as every compose file names these paths

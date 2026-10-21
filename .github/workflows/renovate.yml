@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   renovate:
-    if: github.repository == 'karnull/agent-base'
+    if: github.repository == 'karshosphere/agent-base'
     runs-on: ubuntu-24.04
     steps:
       - uses: renovatebot/github-action@a63d9a7bc606f7336fd20b47f2f32259a35e6213 # v46.3.9
@@ -31,7 +31,7 @@ jobs:
           # renovate: datasource=docker depName=ghcr.io/renovatebot/renovate
           renovate-version: 44.155.9@sha256:1b1d9d1137dc0f71e06d8ca830f783af5138113b57e684693a47a37be578ff04
         env:
-          RENOVATE_REPOSITORIES: karnull/agent-base
+          RENOVATE_REPOSITORIES: karshosphere/agent-base
           RENOVATE_ONBOARDING: "false"
           RENOVATE_REQUIRE_CONFIG: required
           # renovate skips an empty value, which is what a scheduled run or "off" gives it
