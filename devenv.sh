@@ -152,8 +152,18 @@ stage_project() {
             -c commit.gpgsign=false commit -q -m "before update"
 }
 
+# files the template no longer has, which copier removed from the copy; run before anything leaves it
+remove_dropped_files() {
+    local work=$1 name
+    while IFS= read -r -d '' name; do
+        case $name in */*|compose.yaml|.env|.copier-answers.yml) continue ;; esac
+        rm -f -- "$PROJECT_DIR/$name" || return 1
+    done < <(git -C "$work" ls-files --deleted -z)
+}
+
 unstage_project() {
     local work=$1 file
+    remove_dropped_files "$work" || return 1
     move_host_files "$work" || return 1
     for file in "$work"/* "$work"/.[!.]*; do
         [ -f "$file" ] || continue
