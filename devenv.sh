@@ -48,7 +48,8 @@ Actions:
   logs                  follow devcontainer output
   exec <CMD>            run CMD in devcontainer
   claude-remote         run claude code with remote connection, named after the
-                        character when there is one
+                        character when there is one; resumes the last session
+                        here when there is one from the last few hours
   connect               open shell in devcontainer
   list                  list docker containers
 
@@ -280,7 +281,14 @@ case "$ACTION" in
         require_env
         container=$(get_container_name)
         character=$(get_character)
-        docker exec -w "$PWD" "$container" claude remote-control --permission-mode auto --name "${character:-$container}"
+        remote=(docker exec -w "$PWD" "$container" claude remote-control --permission-mode auto --name "${character:-$container}")
+        # --continue fails at once when nothing was recorded here recently; a later failure is a session ending
+        started=$SECONDS
+        "${remote[@]}" --continue && exit
+        status=$?
+        { [ "$status" -gt 128 ] || [ $((SECONDS - started)) -ge 10 ]; } && exit "$status"
+        echo "Nothing to continue here, starting a new session" >&2
+        "${remote[@]}"
         exit
         ;;
 
