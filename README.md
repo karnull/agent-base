@@ -129,7 +129,7 @@ Each container is limited to 8 GB of memory and 1024 processes.
 
 ## Template changes
 
-Projects are rendered from `gh:karnull/agent-base`, never from a local copy, so
+Projects are rendered from `gh:karshosphere/agent-base`, never from a local copy, so
 only pushed changes reach a project. Copier picks the newest tag when there is
 one, so tag a release to hand it out.
 
@@ -188,11 +188,13 @@ Packages installed with `apk add` are not pinned. Alpine removes old versions
 from its repositories, so a pinned package stops building; the pinned base image
 covers them instead.
 
-Renovate needs a token, set up once in `karnull/agent-base`:
+Renovate needs a token, set up once in `karshosphere/agent-base`:
 
-1. Create a fine-grained personal access token with access to
-   `karnull/agent-base` only, and these repository permissions: Contents,
-   Pull requests, Issues and Workflows read and write, Metadata read.
+1. Create a fine-grained personal access token with `karshosphere` as its
+   resource owner, access to `karshosphere/agent-base` only, and these
+   repository permissions: Contents, Pull requests, Issues and Workflows read and
+   write, Metadata read. If the organisation requires approval for fine-grained
+   tokens, approve it under the organisation's settings.
 2. Save it as the repository secret `RENOVATE_TOKEN`.
 
 The workflow's own token cannot be used, as pull requests opened with it do not
