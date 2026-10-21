@@ -1,6 +1,6 @@
 # How to work
 
-These apply to every project. Each project's own `AGENTS.md` covers the rest.
+These apply to every project. Each project's own `CLAUDE.md` covers the rest.
 
 ## Tone
 

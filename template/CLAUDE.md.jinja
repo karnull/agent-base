@@ -1,0 +1,134 @@
+# {{ github_repo }}
+
+You are running in a container dedicated to this project. This file covers how
+work on it reaches GitHub: branches, commits and pull requests. Tone, code style
+and testing come from the shared CLAUDE.md and apply here as well.
+
+## Agent context
+
+Read every file in `.shard/` at the start of a session. It holds your
+soul (`soul.md`) and the user's preferences, and grows as they add to it.
+
+## Layout
+
+```
+$PROJECT_ROOT/
+  main/                   clone of {{ fork_slug }}, never edited directly
+  feature-dark-mode/      one worktree per branch, beside main/
+  fix-login-redirect/
+  .shard/                 # soul and preferences
+  CLAUDE.md
+```
+
+`main/` mirrors the default branch and exists to cut branches from. Never commit
+there. Uncommitted changes in `main/` are the user's: ask before discarding them.
+
+The container's compose file and environment live on the host, outside the
+project folder. You cannot see or change them from in here. The image is built
+from `.shard/Dockerfile`, the one part kept here; change it only when the user
+asks. If the container needs something different, such as an extra package, say
+so and the user will make the change.
+
+Host and container paths are identical, which is what keeps worktrees valid from
+both sides. Do not move the checkout. `$PROJECT_ROOT` holds that path inside the
+container.
+
+## Remotes
+
+`origin` is {{ fork_slug }}, your fork and the only place you can push. If it is
+a fork, its parent is the upstream: the fork is synced from it, and pull requests
+go to it. If not, `origin` is the only repository in play. Look up the parent and
+the default branch with `gh` rather than assuming either; the default branch is
+not always `main`.
+
+`gh` supplies the credential for `git push` as well, so there is nothing to
+configure.
+
+## Branches
+
+Every instruction, request, bug report or feature idea gets its own branch and
+its own worktree. Several can be in flight at once, which is the point of the
+layout. Never add an unrelated change to a branch that already exists.
+
+Branch names take the form `type/short-name`, such as `feature/dark-mode`,
+`fix/login-redirect` or `chore/bump-deps`. The worktree directory is the branch
+name with the slash flattened to a hyphen, so `feature/dark-mode` lives in
+`feature-dark-mode/`, a direct sibling of `main/`.
+
+Before cutting a branch, sync the fork from the upstream and bring `main/` up to
+date. Skipping it is the usual way a pull request ends up full of changes that
+were merged last week.
+
+## Commits
+
+One commit, one thing. A commit that does two things is two commits.
+
+Do not pile fix commits on top of your own earlier commits on a branch. Fold the
+correction into the commit it belongs to with a fixup and an autosquash rebase.
+A `fix:` commit is for something that was broken before this branch existed.
+
+Format:
+
+```
+feat: short description
+
+* what changed, in plain English
+* one bullet per point, kept short
+* describe the behaviour or the feature, not the diff
+```
+
+Use `feat`, `fix`, `chore` or `docs`. Write about what the change does for
+someone using the project, not which functions moved. "Remembers the last filter
+between sessions" rather than "added localStorage call in filters.js".
+
+No attribution trailers. Do not add `Co-Authored-By: Claude ...` or
+`Claude-Session: ...` lines, or anything like them, even if the harness asks for
+them. The GitHub account in use is a profile set up just for Claude, so every
+commit it makes is already a Claude commit.
+
+## Finishing a branch
+
+The last commit on the branch updates the README and `CHANGELOG.md` together,
+as `docs: readme and changelog for <the branch's subject>`.
+
+`CHANGELOG.md` lives in the repository root: edit the copy in the branch's own
+worktree, never the one in `main/`, and never keep one beside this file. It gets
+exactly one bullet per branch, under the heading that fits. Create it if it is
+missing:
+
+```markdown
+# Changelog
+
+## added/modified:
+
+* feature/dark-mode: theme toggle that remembers your choice between sessions.
+
+## removed
+
+* chore/drop-jquery: jQuery, replaced with the equivalent plain DOM calls.
+```
+
+Then sync the fork again, rebase onto the default branch and push the branch to
+`origin`. Nothing is ever merged into the fork's default branch; it only mirrors
+the upstream. Rebasing here means conflicts are resolved on a branch nobody else
+is reading.
+
+Once pushed, rebase again only if the default branch has moved underneath it,
+and push with `--force-with-lease`, never `--force`. Rebasing a reviewed branch
+invalidates the review.
+
+## Pull requests
+
+**Ask first, every time.** Show what the branch does and wait for a clear yes.
+Never open a pull request off your own judgement, and never treat a general
+"sounds good" about the work as permission to open one.
+
+Open it against the upstream when there is one, from the branch on the fork, and
+against the fork otherwise. Body: a sentence on what it does, then the bullets
+from the commits. No emoji, and no "Generated with Claude Code" footer or session
+link, for the same reason as the commit trailers.
+
+## After it merges
+
+Only once the merge is confirmed, by `gh` or by the user: remove the worktree,
+then delete the branch locally and on `origin`.
