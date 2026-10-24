@@ -23,6 +23,7 @@
 * chore/karshosphere: the template, devenv and renovate point at karshosphere/agent-base, where the repository now lives.
 * feature/debian-base: the base image moves from alpine to debian trixie-slim, with claude code from anthropic's signed apt repository and everything else from debian, and every cage has uv, python 3.14 and copier, read-only to the agent, and a UTF-8 locale; project .shard/Dockerfiles that use apk must switch to apt-get.
 * feature/pr-follow-through: agents open a pull request only when the request asks for one, with no extra confirmation, then watch its checks, answer reviews with fixup commits that are folded in once review is over, and clean up once it is merged.
+* feature/release-tags: the template's version lives in VERSION, and CI tags each merge to main as v<VERSION> once every check passes, so copier renders releases rather than whatever is on main; CI runs on main are no longer cancelled by the next push; and agents open a pull request at the end of any single clear request, without asking.
 
 ## removed
 

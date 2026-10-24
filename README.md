@@ -3,11 +3,12 @@
 A Copier template that gives each project its own Claude Code container, a clone
 of your fork in `main/`, and a `CLAUDE.md` covering the git and GitHub workflow.
 
-Under that workflow, an agent opens a pull request only when you ask for one in
-the same request, then sees it through: it watches the checks after every push,
-answers review comments with fixup commits so you can see each change on its own,
-folds those into a clean history once review is over, and removes its branch and
-worktree once the pull request is merged.
+Under that workflow, an agent finishes a single clear request by opening a pull
+request, without asking first; an open-ended one, such as a discussion or a plan,
+stops at a pushed branch. It then sees the pull request through: it watches the
+checks after every push, answers review comments with fixup commits so you can
+see each change on its own, folds those into a clean history once review is over,
+and removes its branch and worktree once the pull request is merged.
 
 ## Setup
 
@@ -152,8 +153,26 @@ Each container is limited to 8 GB of memory and 1024 processes.
 ## Template changes
 
 Projects are rendered from `gh:karshosphere/agent-base`, never from a local copy, so
-only pushed changes reach a project. Copier picks the newest tag when there is
-one, so tag a release to hand it out.
+only pushed changes reach a project. Copier renders the newest release tag, not
+the tip of `main`, so a merged change reaches projects only once it is released.
+
+## Releases
+
+The template's version is in `VERSION`, as `MAJOR.MINOR.PATCH`. To release a
+change, bump it in the same pull request. Once every CI check passes on the
+merge to `main`, the `tag` job tags that commit as `v<VERSION>`, and the next
+`devenv init` or `devenv update` uses it.
+
+A merge that leaves `VERSION` unchanged releases nothing. A `VERSION` older than
+the latest release fails the job, so a release can never be replaced by an
+older one. Tags that are not `vMAJOR.MINOR.PATCH`, such as the old `Version1`,
+are ignored by both the job and copier.
+
+The `tag` job is the only part of CI that can write to the repository. It
+creates the tag through GitHub's API with the workflow's own token, so no write
+credential is ever left in a checkout. If the repository or organisation limits
+what workflows may write, or protects tags with a ruleset, allow GitHub Actions
+to create `v*` tags.
 
 To try a template branch before it is merged, point `devenv` at the fork and the
 branch:
