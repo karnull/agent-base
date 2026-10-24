@@ -1,7 +1,7 @@
 failure-threshold: warning
 
 ignored:
-  # alpine drops old package versions from its repositories, so pinned apk installs stop building
-  - DL3018
+  # debian drops old package versions from its repositories, so pinned apt installs stop building
+  - DL3008
   # every project's .shard/Dockerfile builds on agent-base:latest, a local image with no registry tag
   - DL3007

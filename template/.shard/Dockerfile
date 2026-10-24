@@ -2,7 +2,9 @@ FROM agent-base:latest
 
 USER root
 
-#RUN apk add --no-cache \
+#RUN apt-get update \
+#    && apt-get install -y --no-install-recommends \
 #
+#    && rm -rf /var/lib/apt/lists/*
 
 USER dev
