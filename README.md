@@ -84,14 +84,30 @@ there. That folder is one git repository for every project, created by the first
 it cannot change what the host runs. `.env` holds the project's absolute path,
 so the compose file works from where it now lives.
 
-The `Dockerfile` stays in the project, at `.shard/Dockerfile`. Add packages there.
-The image is built from `.shard` alone, so anything else the build needs goes in
-that folder too.
+The `Dockerfile` stays in the project, at `.shard/Dockerfile`. Add packages there,
+with `apt-get`. The image is built from `.shard` alone, so anything else the build
+needs goes in that folder too.
 
-`gh` and `git` authenticate with the `GH_TOKEN` in `~/.local/blackice/gh.env`.
-It is never committed with the rest of a project's files, but any process in any
-container can read it, so use a fine-grained token limited to the agent's own
-repositories. Without the file, `gh` is logged out and pushes fail.
+## What every cage has
+
+Every cage builds on `agent-base`, a Debian trixie-slim image with git, gh,
+Claude Code, vim, ripgrep, uv, Python 3.14 and copier, running with
+`LANG=C.UTF-8`. Everything but Claude Code comes from Debian's own archive.
+Claude Code has no Debian package, so it comes from Anthropic's apt repository,
+and the build stops if that repository's signing key does not match its pinned
+checksum. The checksum pins the key, not a version: Claude Code follows the
+`stable` channel.
+
+Python stays on the 3.14 series. Renovate proposes 3.14 patch releases, and
+moving to a newer series is a change made by hand.
+
+Python and copier are installed under `/opt/uv`, owned by root, so an agent can
+run them but not replace them. `python3` and `copier` are on every cage's `PATH`,
+so a project can be started from any copier template. An agent can still install
+other Python versions and tools with `uv`, into its own home.
+
+Language toolchains such as Rust, Go or a C compiler are not in the base image.
+Add the one a project needs to its `.shard/Dockerfile`.
 
 ## Claude's files
 
@@ -169,10 +185,11 @@ repository's secrets.
 
 ## Dependency updates
 
-Every version this repository depends on is pinned: the Alpine base image by
-digest, GitHub Actions by commit, and tools by exact version. Renovate keeps
-those pins current. It runs from `.github/workflows/renovate.yml` every Sunday
-morning and opens one pull request per update, following `renovate.json`.
+Every version this repository depends on is pinned: the Debian base image and uv
+by digest, GitHub Actions by commit, and Python, copier and other tools by exact
+version. Renovate keeps those pins current. It runs from
+`.github/workflows/renovate.yml` every Sunday morning and opens one pull request
+per update, following `renovate.json`.
 Releases younger than seven days are held back, and nothing is merged
 automatically. Its Dependency Dashboard issue lists what is waiting.
 
@@ -184,7 +201,7 @@ above it:
 COPIER_VERSION: 9.19.1
 ```
 
-Packages installed with `apk add` are not pinned. Alpine removes old versions
+Packages installed with `apt-get` are not pinned. Debian removes old versions
 from its repositories, so a pinned package stops building; the pinned base image
 covers them instead.
 

@@ -1,8 +1,11 @@
-# base image for every project agent: alpine + vim, git, gh, claude-code
+# base image for every project agent: debian + vim, git, gh, claude-code
 
 #---------------------------------------------------------------------------------------------------
 
-FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+
+# every RUN below fails on the first failing command of a pipe, not just the last
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # a user name, not a secret
 # hadolint ignore=DL3064
@@ -15,53 +18,69 @@ ARG GID=1000
 ARG WORKSPACE_ROOT=/home/kaerosol/Blackwall
 
 ARG TZ=Australia/Melbourne
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apk upgrade --no-cache \
-    && apk add --no-cache \
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
         bash \
         ca-certificates \
         curl \
+        gh \
         git \
-        github-cli \
         less \
-        libgcc \
-        libstdc++ \
         ripgrep \
         tree-sitter-cli \
         tzdata \
-        vim
+        vim \
+    && rm -rf /var/lib/apt/lists/*
 
 #---------------------------------------------------------------------------------------------------
 
-# checksum of the apk signing key, published in the apk tab of
-# https://code.claude.com/docs/en/setup under "Install with Linux package managers".
-ARG CLAUDE_CODE_KEY_SHA256=395759c1f7449ef4cdef305a42e820f3c766d6090d142634ebdb049f113168b6
+# checksum of the signing key, not a version: claude-code itself follows the channel.
+# the key's fingerprint is published at https://code.claude.com/docs/en/setup as
+# 31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE.
+ARG CLAUDE_CODE_KEY_SHA256=bd70a5e4a268002704024ceba7f8446024114e94f3f0bdd11c23a9e592be81c6
 ARG CLAUDE_CODE_CHANNEL=stable
 
-# anthropic's signed apk repository: pin the key, then let apk check the packages
-# the only pipe feeds echo into sha256sum, so pipefail would catch nothing
-# hadolint ignore=DL4006
-RUN wget -q -O /etc/apk/keys/claude-code.rsa.pub \
-        https://downloads.claude.ai/keys/claude-code.rsa.pub \
-    && if ! echo "${CLAUDE_CODE_KEY_SHA256}  /etc/apk/keys/claude-code.rsa.pub" \
-            | sha256sum -c - ; then \
-           echo "the signing key does not match CLAUDE_CODE_KEY_SHA256: re-check the" >&2; \
-           echo "hash in the apk tab of https://code.claude.com/docs/en/setup before" >&2; \
-           echo "trusting this key, it may have been rotated." >&2; \
+# claude code has no debian package, so it comes from anthropic's signed apt repository
+RUN install -d -m 0755 /etc/apt/keyrings \
+    && curl -fsSL -o /etc/apt/keyrings/claude-code.asc https://downloads.claude.ai/keys/claude-code.asc \
+    && if ! echo "${CLAUDE_CODE_KEY_SHA256}  /etc/apt/keyrings/claude-code.asc" | sha256sum -c - ; then \
+           echo "the signing key does not match CLAUDE_CODE_KEY_SHA256: check its fingerprint against" >&2; \
+           echo "https://code.claude.com/docs/en/setup before trusting it, it may have been rotated." >&2; \
            exit 1; \
        fi \
-    && echo "https://downloads.claude.ai/claude-code/apk/${CLAUDE_CODE_CHANNEL}" \
-        >> /etc/apk/repositories \
-    && apk add --no-cache claude-code
+    && echo "deb [signed-by=/etc/apt/keyrings/claude-code.asc] https://downloads.claude.ai/claude-code/apt/${CLAUDE_CODE_CHANNEL} ${CLAUDE_CODE_CHANNEL} main" \
+        > /etc/apt/sources.list.d/claude-code.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends claude-code \
+    && rm -rf /var/lib/apt/lists/*
 
-# macos hands out gids that alpine already assigns (20 is staff on the host, dialout here),
+#---------------------------------------------------------------------------------------------------
+
+COPY --from=ghcr.io/astral-sh/uv:0.13.1@sha256:4a1f3666816dafadd20ceb71eac9a7d56d7ef30279f7d64048519ab901ada336 /uv /uvx /usr/local/bin/
+
+# renovate: datasource=python-version depName=python
+ARG PYTHON_VERSION=3.14.8
+# renovate: datasource=pypi depName=copier
+ARG COPIER_VERSION=9.19.1
+
+# installed as root into /opt, so every agent can run them but none can replace them;
+# the paths are set per command, so dev's own uv still installs into its home
+RUN export UV_NO_CACHE=1 UV_PYTHON_INSTALL_DIR=/opt/uv/python \
+    && UV_PYTHON_BIN_DIR=/usr/local/bin uv python install --default "${PYTHON_VERSION}" \
+    && UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+        uv tool install --python "${PYTHON_VERSION}" "copier==${COPIER_VERSION}"
+
+# macos hands out gids that debian already assigns (20 is staff on the host, dialout here),
 # so join the group that owns the gid instead of failing to create a second one
-RUN group="$(awk -F: -v gid="${GID}" '$3 == gid { print $1 }' /etc/group)" \
+RUN group="$(getent group "${GID}" | cut -d: -f1 || true)" \
     && if [ -z "$group" ]; then \
-           addgroup -g "${GID}" "${USERNAME}"; \
+           groupadd -g "${GID}" "${USERNAME}"; \
            group="${USERNAME}"; \
        fi \
-    && adduser -D -u "${UID}" -G "$group" -s /bin/bash "${USERNAME}"
+    && useradd -l -m -u "${UID}" -g "$group" -s /bin/bash "${USERNAME}"
 
 #---------------------------------------------------------------------------------------------------
 
@@ -82,6 +101,7 @@ ENV XDG_CONFIG_HOME=/home/${USERNAME}/.config
 ENV SHELL=/bin/bash
 ENV PATH=/home/${USERNAME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV TZ=${TZ}
+ENV LANG=C.UTF-8
 
 #---------------------------------------------------------------------------------------------------
 
