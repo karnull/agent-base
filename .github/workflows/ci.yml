@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # only pull request runs are replaced by newer pushes; every commit on main keeps its result
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # renovate: datasource=github-releases depName=astral-sh/uv
