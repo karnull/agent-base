@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # only pull request runs are replaced by newer pushes; every commit on main keeps its result
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # renovate: datasource=github-releases depName=astral-sh/uv
@@ -26,7 +27,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: shellcheck --version && shellcheck devenv.sh
+      - run: shellcheck --version && shellcheck devenv.sh .github/tag-release.sh
 
   hadolint:
     runs-on: ubuntu-24.04
@@ -88,3 +89,20 @@ jobs:
             config --format json | tee "$RUNNER_TEMP/config.json"
           jq -e --arg author "$EXPECTED_AUTHOR" \
             '.services.agent.environment.GIT_AUTHOR_NAME == $author' "$RUNNER_TEMP/config.json"
+
+  # every check above must pass on a push to main before that commit is released
+  tag:
+    needs: [shellcheck, hadolint, build, render]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      # creating the tag is the only write this workflow makes
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: tag the commit as v<VERSION>
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/tag-release.sh
