@@ -3,6 +3,12 @@
 A Copier template that gives each project its own Claude Code container, a clone
 of your fork in `main/`, and a `CLAUDE.md` covering the git and GitHub workflow.
 
+Under that workflow, an agent opens a pull request only when you ask for one in
+the same request, then sees it through: it watches the checks after every push,
+answers review comments with fixup commits so you can see each change on its own,
+folds those into a clean history once review is over, and removes its branch and
+worktree once the pull request is merged.
+
 ## Setup
 
 Once per machine, from this repository:
