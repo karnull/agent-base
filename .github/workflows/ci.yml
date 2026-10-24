@@ -56,6 +56,7 @@ jobs:
             set -e
             uv --version && copier --version
             python3 -c "import sys; assert sys.version_info[:2] == (3, 14), sys.version"
+            python3 -c "import locale; assert locale.getencoding().lower() == \"utf-8\", locale.getencoding()"
             ! touch /opt/uv/tools/probe 2>/dev/null'
 
   render:

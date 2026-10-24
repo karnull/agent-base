@@ -101,6 +101,7 @@ ENV XDG_CONFIG_HOME=/home/${USERNAME}/.config
 ENV SHELL=/bin/bash
 ENV PATH=/home/${USERNAME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV TZ=${TZ}
+ENV LANG=C.UTF-8
 
 #---------------------------------------------------------------------------------------------------
 
