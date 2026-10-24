@@ -19,6 +19,11 @@
       "description": "agent-base is built locally on each machine and never published",
       "matchPackageNames": ["agent-base"],
       "enabled": false
+    },
+    {
+      "description": "python stays on the 3.14 series; moving to a new series is a deliberate choice, not an update",
+      "matchDepNames": ["python"],
+      "allowedVersions": "<3.15"
     }
   ],
   "customManagers": [

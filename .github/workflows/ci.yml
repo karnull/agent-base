@@ -50,6 +50,13 @@ jobs:
         run: docker build -t ci-test-agent:latest template/.shard
       - name: tools in the project image
         run: docker run --rm ci-test-agent:latest sh -c 'git --version && gh --version && claude --version && id'
+      - name: python, uv and copier in the project image, read-only to the agent
+        run: |
+          docker run --rm ci-test-agent:latest sh -c '
+            set -e
+            uv --version && copier --version
+            python3 -c "import sys; assert sys.version_info[:2] == (3, 14), sys.version"
+            ! touch /opt/uv/tools/probe 2>/dev/null'
 
   render:
     runs-on: ubuntu-24.04

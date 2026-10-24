@@ -57,6 +57,22 @@ RUN install -d -m 0755 /etc/apt/keyrings \
     && apt-get install -y --no-install-recommends claude-code \
     && rm -rf /var/lib/apt/lists/*
 
+#---------------------------------------------------------------------------------------------------
+
+COPY --from=ghcr.io/astral-sh/uv:0.13.1@sha256:4a1f3666816dafadd20ceb71eac9a7d56d7ef30279f7d64048519ab901ada336 /uv /uvx /usr/local/bin/
+
+# renovate: datasource=python-version depName=python
+ARG PYTHON_VERSION=3.14.8
+# renovate: datasource=pypi depName=copier
+ARG COPIER_VERSION=9.19.1
+
+# installed as root into /opt, so every agent can run them but none can replace them;
+# the paths are set per command, so dev's own uv still installs into its home
+RUN export UV_NO_CACHE=1 UV_PYTHON_INSTALL_DIR=/opt/uv/python \
+    && UV_PYTHON_BIN_DIR=/usr/local/bin uv python install --default "${PYTHON_VERSION}" \
+    && UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+        uv tool install --python "${PYTHON_VERSION}" "copier==${COPIER_VERSION}"
+
 # macos hands out gids that debian already assigns (20 is staff on the host, dialout here),
 # so join the group that owns the gid instead of failing to create a second one
 RUN group="$(getent group "${GID}" | cut -d: -f1 || true)" \
