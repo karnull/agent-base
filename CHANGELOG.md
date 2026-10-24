@@ -22,6 +22,7 @@
 * chore/claude-md: each project's workflow file is CLAUDE.md rather than AGENTS.md and keeps only the rules, not the gh and git recipes; devenv update never copies the project's .git, so a container can no longer get git to run its hooks on the host, and removes files the template has dropped; devenv claude-remote resumes the last remote session in the folder when there is a recent one.
 * chore/karshosphere: the template, devenv and renovate point at karshosphere/agent-base, where the repository now lives.
 * feature/debian-base: the base image moves from alpine to debian trixie-slim, with claude code from anthropic's signed apt repository and everything else from debian, and every cage has uv, python 3.14 and copier, read-only to the agent, and a UTF-8 locale; project .shard/Dockerfiles that use apk must switch to apt-get.
+* feature/pr-follow-through: agents open a pull request only when the request asks for one, with no extra confirmation, then watch its checks, answer reviews with fixup commits that are folded in once review is over, and clean up once it is merged.
 
 ## removed
 
